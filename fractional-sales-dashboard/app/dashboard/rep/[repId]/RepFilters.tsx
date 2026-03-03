@@ -2,6 +2,8 @@
 
 import type { ClientFunnelConfig } from "@/lib/funnel/types";
 
+const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
+
 export function RepFilters({
   clientId,
   clients,
@@ -34,11 +36,11 @@ export function RepFilters({
             const newClientId = e.target.value;
             if (navMode === "clientTab") {
               const params = new URLSearchParams({ repId, year: String(year), month: String(month) });
-              window.location.href = `/dashboard/clients/${newClientId}/reps?${params.toString()}`;
+              window.location.href = `${basePath}/dashboard/clients/${newClientId}/reps?${params.toString()}`;
               return;
             }
             const url = new URL(window.location.href);
-            url.pathname = `/dashboard/rep/${repId}`;
+            url.pathname = `${basePath}/dashboard/rep/${repId}`;
             url.searchParams.set("clientId", newClientId);
             window.location.href = url.pathname + url.search;
           }}
@@ -57,10 +59,10 @@ export function RepFilters({
             const newRepId = e.target.value;
             if (navMode === "clientTab") {
               const params = new URLSearchParams({ repId: newRepId, year: String(year), month: String(month) });
-              window.location.href = `/dashboard/clients/${clientId}/reps?${params.toString()}`;
+              window.location.href = `${basePath}/dashboard/clients/${clientId}/reps?${params.toString()}`;
               return;
             }
-            window.location.href = `/dashboard/rep/${newRepId}?clientId=${clientId}`;
+            window.location.href = `${basePath}/dashboard/rep/${newRepId}?clientId=${clientId}`;
           }}
         >
           {reps.map((r) => (

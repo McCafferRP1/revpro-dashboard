@@ -9,7 +9,7 @@ export function BrandingSection() {
       </p>
       <div className="flex items-center gap-4">
         <div className="relative w-32 h-9 bg-[var(--background)] rounded border border-[var(--card-border)] flex items-center justify-center overflow-hidden">
-          <Image src="/revpro-logo.svg" alt="RevPro" width={100} height={24} className="h-6 w-auto" />
+          <Image src={`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/revpro-logo.svg`} alt="RevPro" width={100} height={24} className="h-6 w-auto" />
         </div>
         <span className="text-sm font-semibold text-[var(--foreground)]">RevPro</span>
       </div>

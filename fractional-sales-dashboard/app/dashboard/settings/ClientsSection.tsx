@@ -4,6 +4,9 @@ import Link from "next/link";
 import { useState } from "react";
 import { addClientAction, removeClientAction } from "./actions";
 import type { ClientFunnelConfig } from "@/lib/funnel/types";
+
+const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
+
 export function ClientsSection({
   clients,
   accountManagers,
@@ -27,7 +30,7 @@ export function ClientsSection({
       });
       setAddName("");
       setAddAMId("");
-      window.location.href = `/dashboard/clients/${clientId}/settings`;
+      window.location.href = `${basePath}/dashboard/clients/${clientId}/settings`;
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to add client");
     }

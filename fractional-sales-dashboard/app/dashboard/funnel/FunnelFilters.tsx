@@ -2,6 +2,8 @@
 
 import type { ClientFunnelConfig } from "@/lib/funnel/types";
 
+const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
+
 export function FunnelFilters({
   clientId,
   clients,
@@ -28,7 +30,7 @@ export function FunnelFilters({
           onChange={(e) => {
             const newId = e.target.value;
             if (useClientRoutes) {
-              window.location.href = `/dashboard/clients/${newId}/funnel`;
+              window.location.href = `${basePath}/dashboard/clients/${newId}/funnel`;
             } else {
               const url = new URL(window.location.href);
               url.searchParams.set("clientId", newId);

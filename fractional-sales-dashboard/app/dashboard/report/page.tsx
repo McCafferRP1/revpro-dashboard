@@ -247,7 +247,7 @@ export default async function WeeklyReportPage({
         {/* Header */}
         <header className="border-b border-gray-200 pb-6 mb-8">
           <div className="flex items-center justify-between gap-4">
-            <img src="/revpro-logo.svg" alt="RevPro" className="h-10 w-auto" width={150} height={40} />
+            <img src={`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/revpro-logo.svg`} alt="RevPro" className="h-10 w-auto" width={150} height={40} />
             <div className="text-right text-sm text-gray-500">{generatedAt}</div>
           </div>
           <h1 className="mt-6 text-2xl font-bold text-gray-900">
