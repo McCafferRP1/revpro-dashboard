@@ -33,7 +33,7 @@ export async function addUserAction(params: {
   isAdministrator: boolean;
   password: string;
 }) {
-  addUser(params);
+  await addUser(params);
   revalidatePath("/dashboard/settings");
 }
 
@@ -41,18 +41,18 @@ export async function updateUserAction(
   userId: string,
   updates: { role?: UserRole; isAdministrator?: boolean; name?: string }
 ) {
-  updateUser(userId, updates);
+  await updateUser(userId, updates);
   revalidatePath("/dashboard/settings");
 }
 
 export async function removeUserAction(userId: string) {
-  const users = getUsers();
+  const users = await getUsers();
   const user = users.find((u) => u.id === userId);
   if (user?.isAdministrator && users.filter((u) => u.isAdministrator).length <= 1) {
     throw new Error("Cannot remove the last administrator.");
   }
   clearAccountManagerFromClients(userId);
-  removeUser(userId);
+  await removeUser(userId);
   revalidatePath("/dashboard/settings");
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/clients");

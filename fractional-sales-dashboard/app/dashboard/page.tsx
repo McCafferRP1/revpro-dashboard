@@ -104,7 +104,7 @@ export default async function DashboardPage({
   const bottomReps = sortedByPacing.slice(-5).reverse();
 
   const maxCWChart = Math.max(1, ...clientData.flatMap((d) => d.weeklyTrends.map((t) => t.closedWonValue)));
-  const users = getUsers();
+  const users = await getUsers();
   const accountManagers = getAccountManagers(users);
 
   return (

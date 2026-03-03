@@ -13,7 +13,7 @@ export async function loginAction(
   password: string,
   callbackUrl: string
 ): Promise<{ error?: string }> {
-  const user = getUserByEmail(email);
+  const user = await getUserByEmail(email);
   if (!user) return { error: "Invalid email or password." };
   if (!verifyPassword(user, password)) return { error: "Invalid email or password." };
   const value = createSessionPayload(user);

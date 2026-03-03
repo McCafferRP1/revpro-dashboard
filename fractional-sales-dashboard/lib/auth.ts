@@ -1,10 +1,12 @@
 /**
  * Simple auth: users store, session cookie (signed), role-based access.
- * In production: use a proper auth provider and database.
+ * On Netlify we persist users in Netlify Blobs so they survive across serverless instances.
+ * Locally we use in-memory (no Blobs config).
  */
 
 import { cookies } from "next/headers";
 import { createHash, createHmac, timingSafeEqual } from "crypto";
+import { getStore } from "@netlify/blobs";
 
 export type UserRole = "account_manager" | "collaborator";
 
@@ -21,6 +23,7 @@ export interface User {
 const SESSION_COOKIE = "revpro_session";
 const SESSION_MAX_AGE = 60 * 60 * 24 * 7; // 7 days
 const SECRET = process.env.SESSION_SECRET ?? "revpro-dev-secret-change-in-production";
+const BLOB_KEY = "revpro-users";
 
 function sign(payload: string): string {
   return createHmac("sha256", SECRET).update(payload).digest("hex");
@@ -30,30 +33,65 @@ function hashPassword(password: string): string {
   return createHash("sha256").update(password).digest("hex");
 }
 
-/** In-memory user store. Seed with Matt as admin + account manager. */
-const usersStore: User[] = [
-  {
+/** Seed user for first-run and local fallback. */
+function seedUser(): User {
+  return {
     id: "matt",
     email: "matt@revpro.io",
     name: "Matt",
     role: "account_manager",
     isAdministrator: true,
-    passwordHash: hashPassword("revpro"), // default password for dev
-  },
-];
-
-export function getUsers(): Omit<User, "passwordHash">[] {
-  return usersStore.map(({ passwordHash: _, ...u }) => u);
+    passwordHash: hashPassword("revpro"),
+  };
 }
 
-export function addUser(params: {
+/** In-memory fallback when not on Netlify (e.g. local dev). */
+let memoryStore: User[] = [seedUser()];
+
+async function getUsersStore(): Promise<User[]> {
+  if (process.env.NETLIFY !== "true") return memoryStore;
+  try {
+    const store = getStore({ name: "revpro-auth", consistency: "strong" });
+    const raw = await store.get(BLOB_KEY);
+    if (!raw) {
+      const initial = [seedUser()];
+      await store.set(BLOB_KEY, JSON.stringify(initial));
+      return initial;
+    }
+    const str = typeof raw === "string" ? raw : new TextDecoder().decode(raw as ArrayBuffer);
+    return JSON.parse(str) as User[];
+  } catch {
+    return memoryStore;
+  }
+}
+
+async function setUsersStore(users: User[]): Promise<void> {
+  if (process.env.NETLIFY !== "true") {
+    memoryStore = users;
+    return;
+  }
+  try {
+    const store = getStore({ name: "revpro-auth", consistency: "strong" });
+    await store.set(BLOB_KEY, JSON.stringify(users));
+  } catch {
+    memoryStore = users;
+  }
+}
+
+export async function getUsers(): Promise<Omit<User, "passwordHash">[]> {
+  const store = await getUsersStore();
+  return store.map(({ passwordHash: _, ...u }) => u);
+}
+
+export async function addUser(params: {
   email: string;
   name: string;
   role: UserRole;
   isAdministrator: boolean;
   password: string;
-}): User {
-  const existing = usersStore.find((u) => u.email.toLowerCase() === params.email.toLowerCase());
+}): Promise<User> {
+  const store = await getUsersStore();
+  const existing = store.find((u) => u.email.toLowerCase() === params.email.toLowerCase());
   if (existing) throw new Error("A user with this email already exists.");
   const id = params.email.toLowerCase().replace(/[^a-z0-9]/g, "-").slice(0, 32) + "-" + Date.now().toString(36);
   const user: User = {
@@ -64,34 +102,41 @@ export function addUser(params: {
     isAdministrator: params.isAdministrator,
     passwordHash: hashPassword(params.password),
   };
-  usersStore.push(user);
+  store.push(user);
+  await setUsersStore(store);
   return user;
 }
 
-export function updateUser(
+export async function updateUser(
   userId: string,
   updates: { role?: UserRole; isAdministrator?: boolean; name?: string }
-): User | null {
-  const user = usersStore.find((u) => u.id === userId);
+): Promise<User | null> {
+  const store = await getUsersStore();
+  const user = store.find((u) => u.id === userId);
   if (!user) return null;
   if (updates.role !== undefined) user.role = updates.role;
   if (updates.isAdministrator !== undefined) user.isAdministrator = updates.isAdministrator;
   if (updates.name !== undefined) user.name = updates.name;
+  await setUsersStore(store);
   return user;
 }
 
-export function getUserById(id: string): User | null {
-  return usersStore.find((u) => u.id === id) ?? null;
+export async function getUserById(id: string): Promise<User | null> {
+  const store = await getUsersStore();
+  return store.find((u) => u.id === id) ?? null;
 }
 
-export function getUserByEmail(email: string): User | null {
-  return usersStore.find((u) => u.email.toLowerCase() === email.toLowerCase()) ?? null;
+export async function getUserByEmail(email: string): Promise<User | null> {
+  const store = await getUsersStore();
+  return store.find((u) => u.email.toLowerCase() === email.toLowerCase()) ?? null;
 }
 
-export function removeUser(id: string): boolean {
-  const idx = usersStore.findIndex((u) => u.id === id);
+export async function removeUser(id: string): Promise<boolean> {
+  const store = await getUsersStore();
+  const idx = store.findIndex((u) => u.id === id);
   if (idx < 0) return false;
-  usersStore.splice(idx, 1);
+  store.splice(idx, 1);
+  await setUsersStore(store);
   return true;
 }
 
@@ -118,7 +163,7 @@ export async function getSession(): Promise<Session | null> {
     return null;
   }
   if (payload.exp < Date.now() / 1000) return null;
-  const user = getUserById(payload.userId);
+  const user = await getUserById(payload.userId);
   if (!user) return null;
   return { userId: user.id, role: user.role, name: user.name, isAdministrator: user.isAdministrator };
 }

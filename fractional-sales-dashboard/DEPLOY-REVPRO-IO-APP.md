@@ -38,18 +38,16 @@ Add this (replace the URL with your dashboard site’s Netlify URL):
   status = 200
 ```
 
-Example: if the dashboard site URL is `https://revpro-dashboard.netlify.app`, then:
+4. Commit and push. Netlify will redeploy the main site.
+5. Visit **https://www.revpro.io/app** — you should see the dashboard.
 
-```toml
-[[redirects]]
-  force = true
-  from = "/app/*"
-  to = "https://revpro-dashboard.netlify.app/app/:splat"
-  status = 200
-```
+---
 
-3. Commit and push. Netlify will redeploy the main site.
-4. Visit **https://www.revpro.io/app** — you should see the dashboard (login page).
+### If it doesn't work
+
+- **404 or wrong page:** Check that **From** is exactly `/app/*` and **To** ends with `/app/:splat` and uses the correct dashboard URL.
+- **Redirect loop or wrong site:** Make sure you added the redirect on the **main** site (www.revpro.io), not on the revpro-dashboard site.
+- **Dashboard shows but assets/links break:** On the **revpro-dashboard** site, ensure `NEXT_PUBLIC_BASE_PATH` is set to `/app` and you've redeployed that site.
 
 ---
 

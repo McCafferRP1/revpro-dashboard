@@ -22,7 +22,7 @@ export default async function ClientSettingsPage({
   }
 
   const reps = getRepsForClient(clientId);
-  const users = getUsers();
+  const users = await getUsers();
   const accountManagers = getAccountManagers(users);
   const ghl = getIntegration(clientId, "ghl");
   const ghlMappings = getFieldMappings(clientId, "ghl");

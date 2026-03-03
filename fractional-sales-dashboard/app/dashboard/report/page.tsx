@@ -35,7 +35,7 @@ export default async function WeeklyReportPage({
 }) {
   const session = await getSession();
   if (!session?.isAdministrator) redirect("/dashboard");
-  const users = getUsers();
+  const users = await getUsers();
 
   const params = await searchParams;
   const accountManagerId = params.accountManagerId ?? "all";

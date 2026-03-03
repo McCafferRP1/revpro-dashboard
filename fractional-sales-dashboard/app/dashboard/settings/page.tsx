@@ -13,7 +13,7 @@ export default async function GlobalSettingsPage() {
   if (!session?.isAdministrator) redirect("/dashboard");
 
   const clients = getClientConfigs();
-  const users = getUsers();
+  const users = await getUsers();
   const accountManagers = getAccountManagers(users);
 
   return (
