@@ -7,6 +7,5 @@ export async function logoutAction() {
   const store = await cookies();
   const path = process.env.NEXT_PUBLIC_BASE_PATH || "/";
   store.set("revpro_session", "", { path, maxAge: 0 });
-  const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
-  redirect(`${basePath}/login`);
+  redirect("/login");
 }
