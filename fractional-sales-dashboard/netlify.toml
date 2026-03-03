@@ -13,6 +13,13 @@
 [[plugins]]
   package = "@netlify/plugin-nextjs"
 
+# Redirect site root to /app so https://revpro-dashboard.netlify.app/ doesn't 404
+[[redirects]]
+  from = "/"
+  to = "/app"
+  status = 302
+  force = true
+
 # Required in Netlify UI (Site settings → Environment variables):
 #   SESSION_SECRET = long random string (e.g. openssl rand -hex 32)
 #   NEXT_PUBLIC_BASE_PATH = /app   (so app is served at www.revpro.io/app when proxied)
