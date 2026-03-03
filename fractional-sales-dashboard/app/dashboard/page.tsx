@@ -3,6 +3,7 @@ import { getUsers } from "@/lib/auth";
 import { getClientConfigs, getClientConfig, getMockTargets, getAccountManagers } from "@/lib/funnel/mockData";
 import { getClientMetrics } from "@/lib/funnel/metrics";
 import { PortfolioAccountManagerFilter } from "./PortfolioAccountManagerFilter";
+import { DiscoveryRefreshTrigger } from "./DiscoveryRefreshTrigger";
 
 function CircularPacing({ pct, size = 40 }: { pct: number | null; size?: number }) {
   if (pct == null) return <span className="text-xs text-[var(--muted)]">—</span>;
@@ -109,6 +110,7 @@ export default async function DashboardPage({
 
   return (
     <div className="space-y-6">
+      <DiscoveryRefreshTrigger />
       <div className="flex flex-wrap items-center justify-between gap-4">
         <h1 className="text-2xl font-bold text-[var(--foreground)]">Portfolio overview</h1>
         <div className="flex items-center gap-4">

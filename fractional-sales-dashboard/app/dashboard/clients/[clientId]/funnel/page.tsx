@@ -2,6 +2,7 @@ import { getClientConfig, getMockTargets, getClientConfigs } from "@/lib/funnel/
 import { getClientMetrics } from "@/lib/funnel/metrics";
 import Link from "next/link";
 import { FunnelFilters } from "@/app/dashboard/funnel/FunnelFilters";
+import { DiscoveryRefreshTrigger } from "@/app/dashboard/DiscoveryRefreshTrigger";
 
 export default async function ClientFunnelPage({
   params,
@@ -41,6 +42,7 @@ export default async function ClientFunnelPage({
 
   return (
     <div className="space-y-6">
+      <DiscoveryRefreshTrigger clientId={clientId} />
       <FunnelFilters
         clientId={clientId}
         clients={getClientConfigs()}

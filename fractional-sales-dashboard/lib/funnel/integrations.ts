@@ -116,3 +116,9 @@ export function setIntegrationsFromSnapshot(snapshot: IntegrationsSnapshot): voi
   if (snapshot.integrations) Object.assign(clientIntegrationsStore, snapshot.integrations);
   if (snapshot.fieldMappings) Object.assign(clientFieldMappingsStore, snapshot.fieldMappings);
 }
+
+/** Client IDs that have a GHL API key configured (for discovery refresh triggers). */
+export function getClientIdsWithGhlConfigured(): string[] {
+  const { integrations } = getIntegrationsSnapshot();
+  return Object.keys(integrations).filter((clientId) => integrations[clientId]?.ghl?.configured === true);
+}
