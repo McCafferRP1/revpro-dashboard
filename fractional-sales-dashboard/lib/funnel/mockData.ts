@@ -2,6 +2,7 @@ import type { ClientFunnelConfig, Opportunity, MonthlyTarget, RepConfig, RepRole
 import { bbpFunnelConfig, bbpReps } from "./bbpConfig";
 import { clearClientIntegrations } from "./integrations";
 import { loadSettings, saveSettings } from "@/lib/settingsBlob";
+import { getIntegrationsSnapshot, setIntegrationsFromSnapshot } from "@/lib/funnel/integrations";
 
 /** Base client configs (seed). Additional clients added via global Settings are in additionalClientsStore. */
 const clientConfigsBase: ClientFunnelConfig[] = [bbpFunnelConfig];
@@ -299,14 +300,23 @@ export async function hydrateSettings(): Promise<void> {
     mockTargetsStore.length = 0;
     mockTargetsStore.push(...data.targets);
   }
+  if (data.integrations != null || data.fieldMappings != null) {
+    setIntegrationsFromSnapshot({
+      integrations: data.integrations ?? {},
+      fieldMappings: data.fieldMappings ?? {},
+    });
+  }
 }
 
 /** Persist current in-memory settings to Blobs (call after any mutation). */
 export async function persistSettings(): Promise<void> {
+  const { integrations, fieldMappings } = getIntegrationsSnapshot();
   await saveSettings({
     additionalClients: [...additionalClientsStore],
     clientOverrides: { ...clientOverridesStore },
     reps: [...repStore],
     targets: [...mockTargetsStore],
+    integrations,
+    fieldMappings,
   });
 }

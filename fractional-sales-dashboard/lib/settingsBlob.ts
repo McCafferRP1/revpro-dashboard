@@ -5,6 +5,7 @@
 
 import { getStore } from "@netlify/blobs";
 import type { ClientFunnelConfig, MonthlyTarget, RepConfig } from "@/lib/funnel/types";
+import type { IntegrationsSnapshot } from "@/lib/funnel/integrations";
 
 const BLOB_STORE = "revpro-settings";
 const BLOB_KEY = "data";
@@ -14,6 +15,8 @@ export interface SettingsSnapshot {
   clientOverrides: Record<string, { accountManagerId?: string; accountManagerName?: string; reportLogoUrl?: string }>;
   reps: RepConfig[];
   targets: MonthlyTarget[];
+  integrations?: IntegrationsSnapshot["integrations"];
+  fieldMappings?: IntegrationsSnapshot["fieldMappings"];
 }
 
 export async function loadSettings(): Promise<SettingsSnapshot | null> {

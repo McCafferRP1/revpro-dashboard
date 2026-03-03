@@ -96,3 +96,23 @@ export function setFieldMapping(clientId: string, id: IntegrationId, ourField: s
   else list.push(entry);
   getClientMappings(clientId)[id] = list;
 }
+
+/** Snapshot for persisting to Blob (configured + masked key only; raw key is never stored). */
+export interface IntegrationsSnapshot {
+  integrations: Record<string, Record<IntegrationId, IntegrationConfig>>;
+  fieldMappings: Record<string, Record<IntegrationId, FieldMappingEntry[]>>;
+}
+
+export function getIntegrationsSnapshot(): IntegrationsSnapshot {
+  return {
+    integrations: JSON.parse(JSON.stringify(clientIntegrationsStore)),
+    fieldMappings: JSON.parse(JSON.stringify(clientFieldMappingsStore)),
+  };
+}
+
+export function setIntegrationsFromSnapshot(snapshot: IntegrationsSnapshot): void {
+  for (const clientId of Object.keys(clientIntegrationsStore)) delete clientIntegrationsStore[clientId];
+  for (const clientId of Object.keys(clientFieldMappingsStore)) delete clientFieldMappingsStore[clientId];
+  if (snapshot.integrations) Object.assign(clientIntegrationsStore, snapshot.integrations);
+  if (snapshot.fieldMappings) Object.assign(clientFieldMappingsStore, snapshot.fieldMappings);
+}

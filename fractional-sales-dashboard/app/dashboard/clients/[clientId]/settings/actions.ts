@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { upsertRep, deleteRep as deleteRepStore, setClientAccountManager, setClientReportLogo, hydrateSettings, persistSettings } from "@/lib/funnel/mockData";
-import { setIntegrationKey, clearIntegrationKey, setFieldMapping, type IntegrationId } from "@/lib/funnel/integrations";
+import { setIntegrationKey, clearIntegrationKey, setFieldMapping, setFieldMappings, type IntegrationId } from "@/lib/funnel/integrations";
 import type { RepConfig } from "@/lib/funnel/types";
 
 function slug(name: string): string {
@@ -56,19 +56,37 @@ export async function setReportLogo(clientId: string, reportLogoUrl: string) {
 }
 
 export async function saveIntegrationKey(clientId: string, id: IntegrationId, key: string) {
+  await hydrateSettings();
   setIntegrationKey(clientId, id, key);
+  await persistSettings();
   revalidatePath(`/dashboard/clients/${clientId}`);
   revalidatePath(`/dashboard/clients/${clientId}/settings`);
 }
 
 export async function clearIntegrationKeyAction(clientId: string, id: IntegrationId) {
+  await hydrateSettings();
   clearIntegrationKey(clientId, id);
+  await persistSettings();
   revalidatePath(`/dashboard/clients/${clientId}`);
   revalidatePath(`/dashboard/clients/${clientId}/settings`);
 }
 
 export async function saveFieldMapping(clientId: string, id: IntegrationId, ourField: string, theirField: string) {
+  await hydrateSettings();
   setFieldMapping(clientId, id, ourField, theirField);
+  await persistSettings();
+  revalidatePath(`/dashboard/clients/${clientId}`);
+  revalidatePath(`/dashboard/clients/${clientId}/settings`);
+}
+
+export async function saveAllFieldMappings(
+  clientId: string,
+  id: IntegrationId,
+  entries: { ourField: string; theirField: string }[]
+) {
+  await hydrateSettings();
+  setFieldMappings(clientId, id, entries.filter((e) => e.ourField && e.theirField.trim()));
+  await persistSettings();
   revalidatePath(`/dashboard/clients/${clientId}`);
   revalidatePath(`/dashboard/clients/${clientId}/settings`);
 }

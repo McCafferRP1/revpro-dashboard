@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { REVPRO_FIELDS, type IntegrationId } from "@/lib/funnel/integrations";
-import { saveIntegrationKey, clearIntegrationKeyAction, saveFieldMapping } from "./actions";
+import { saveIntegrationKey, clearIntegrationKeyAction, saveAllFieldMappings } from "./actions";
 
 const INTEGRATION_LABELS: Record<IntegrationId, string> = {
   ghl: "GoHighLevel (GHL)",
@@ -23,6 +23,7 @@ export function ClientIntegrationsSection({
     Object.fromEntries(initialMappings.map((m) => [m.ourField, m.theirField]))
   );
   const [saving, setSaving] = useState(false);
+  const [savingMappings, setSavingMappings] = useState(false);
 
   async function handleSaveKey() {
     if (!ghlKey.trim()) return;
@@ -32,9 +33,11 @@ export function ClientIntegrationsSection({
     setSaving(false);
   }
 
-  async function handleMappingChange(ourField: string, theirField: string) {
-    setMappings((prev) => ({ ...prev, [ourField]: theirField }));
-    await saveFieldMapping(clientId, "ghl", ourField, theirField);
+  async function handleSaveMappings() {
+    setSavingMappings(true);
+    const entries = Object.entries(mappings).map(([ourField, theirField]) => ({ ourField, theirField: theirField.trim() }));
+    await saveAllFieldMappings(clientId, "ghl", entries);
+    setSavingMappings(false);
   }
 
   return (
@@ -81,7 +84,7 @@ export function ClientIntegrationsSection({
         <div className="space-y-3 pt-4 border-t border-[var(--card-border)]">
           <h4 className="text-xs font-medium text-[var(--foreground)]">Field mapping (receiving parameters)</h4>
           <p className="text-xs text-[var(--muted)]">
-            Most clients track sales in two ways: <strong>Revenue booked</strong> (full deal value, e.g. $5k program) and <strong>Cash collected (at point of sale)</strong> (e.g. $2,500 upfront). Map your CRM&apos;s field names to the RevPro fields below so we can receive both.
+            Map your CRM&apos;s field names to the RevPro fields below. <strong>Revenue booked</strong> and <strong>Cash collected</strong> are required for closed-won attribution. Click Save mappings to store your changes.
           </p>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -99,7 +102,7 @@ export function ClientIntegrationsSection({
                       <input
                         type="text"
                         value={mappings[key] ?? ""}
-                        onChange={(e) => handleMappingChange(key, e.target.value)}
+                        onChange={(e) => setMappings((prev) => ({ ...prev, [key]: e.target.value }))}
                         className="w-full max-w-xs rounded border border-[var(--card-border)] bg-[var(--background)] px-2 py-1 text-[var(--foreground)] font-mono text-xs"
                         placeholder={key}
                       />
@@ -108,6 +111,16 @@ export function ClientIntegrationsSection({
                 ))}
               </tbody>
             </table>
+          </div>
+          <div className="pt-2">
+            <button
+              type="button"
+              onClick={handleSaveMappings}
+              disabled={savingMappings}
+              className="rounded bg-[var(--accent)] text-white px-3 py-2 text-sm font-medium hover:opacity-90 disabled:opacity-50"
+            >
+              {savingMappings ? "Saving…" : "Save mappings"}
+            </button>
           </div>
         </div>
       )}
