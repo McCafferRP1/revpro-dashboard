@@ -2,8 +2,8 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { hasSessionCookie } from "@/lib/auth-middleware";
 
-// Must match next.config basePath (e.g. /app when served at www.revpro.io/app)
-const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH ?? "/app";
+// Must match next.config basePath (e.g. /app when served at www.revpro.io/app; empty on Netlify direct URL)
+const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH || "";
 
 function url(path: string, request: NextRequest) {
   return new URL(BASE_PATH + path, request.url);

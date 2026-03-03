@@ -25,7 +25,7 @@ export async function loginAction(
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
     maxAge,
-    path: process.env.NEXT_PUBLIC_BASE_PATH || "/app",
+    path: process.env.NEXT_PUBLIC_BASE_PATH || "/",
   });
   redirect(callbackUrl);
 }
