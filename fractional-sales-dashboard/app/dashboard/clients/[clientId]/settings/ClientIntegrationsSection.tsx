@@ -182,6 +182,7 @@ export function ClientIntegrationsSection({
               {savingMappings ? "Saving…" : "Save mappings"}
             </button>
           </div>
+          </div>
         </>
       )}
     </div>
