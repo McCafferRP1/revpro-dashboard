@@ -1,0 +1,3 @@
+# Netlify config at repo root.
+# Build settings are in Netlify UI with Base directory = fractional-sales-dashboard.
+# (Redirect / to /app only when using basePath; removed so app at root works.)

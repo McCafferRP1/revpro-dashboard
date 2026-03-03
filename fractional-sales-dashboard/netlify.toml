@@ -1,13 +1,15 @@
 # Netlify config for Next.js (fractional-sales-dashboard)
-# Next.js 16 is supported with zero config; Netlify uses OpenNext automatically.
+# Next.js 16: Netlify uses OpenNext; we force the plugin so SSR works.
 
 [build]
   command = "npm run build"
-  # If this repo is the dashboard only, leave as-is.
-  # If deploying from a monorepo, set base = "fractional-sales-dashboard" in the Netlify UI instead.
 
 [build.environment]
   NODE_VERSION = "20"
+
+# Ensure Next.js runtime is used (handles dynamic routes)
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
 
 # Required in Netlify UI (Site settings → Environment variables):
 #   SESSION_SECRET = long random string (e.g. openssl rand -hex 32)
