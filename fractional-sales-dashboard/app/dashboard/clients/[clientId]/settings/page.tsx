@@ -1,6 +1,7 @@
 import { getUsers } from "@/lib/auth";
 import { getClientConfig, getRepsForClient, getAccountManagers } from "@/lib/funnel/mockData";
 import { getIntegration, getFieldMappings } from "@/lib/funnel/integrations";
+import { getDiscoveryCached } from "@/lib/funnel/ghlDiscovery";
 import { RepManager } from "./RepManager";
 import { AccountManagerSelect } from "./AccountManagerSelect";
 import { ClientReportLogo } from "./ClientReportLogo";
@@ -26,6 +27,7 @@ export default async function ClientSettingsPage({
   const accountManagers = getAccountManagers(users);
   const ghl = getIntegration(clientId, "ghl");
   const ghlMappings = getFieldMappings(clientId, "ghl");
+  const initialDiscovery = getDiscoveryCached(clientId);
 
   return (
     <div className="space-y-6">
@@ -46,6 +48,7 @@ export default async function ClientSettingsPage({
         clientId={clientId}
         initialGhl={ghl}
         initialMappings={ghlMappings}
+        initialDiscovery={initialDiscovery}
       />
 
       <RepManager clientId={clientId} reps={reps} />

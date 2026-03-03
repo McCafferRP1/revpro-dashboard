@@ -3,6 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { upsertRep, deleteRep as deleteRepStore, setClientAccountManager, setClientReportLogo, hydrateSettings, persistSettings } from "@/lib/funnel/mockData";
 import { setIntegrationKey, clearIntegrationKey, setFieldMapping, setFieldMappings, type IntegrationId } from "@/lib/funnel/integrations";
+import { setGhlKey, deleteGhlKey } from "@/lib/ghlKeys";
+import { getDiscoveryCached, refreshDiscovery, type DiscoverySnapshot } from "@/lib/funnel/ghlDiscovery";
 import type { RepConfig } from "@/lib/funnel/types";
 
 function slug(name: string): string {
@@ -57,7 +59,11 @@ export async function setReportLogo(clientId: string, reportLogoUrl: string) {
 
 export async function saveIntegrationKey(clientId: string, id: IntegrationId, key: string) {
   await hydrateSettings();
-  setIntegrationKey(clientId, id, key);
+  const trimmed = key?.trim() ?? "";
+  setIntegrationKey(clientId, id, trimmed);
+  if (id === "ghl" && trimmed.length >= 8) {
+    await setGhlKey(clientId, trimmed);
+  }
   await persistSettings();
   revalidatePath(`/dashboard/clients/${clientId}`);
   revalidatePath(`/dashboard/clients/${clientId}/settings`);
@@ -66,6 +72,9 @@ export async function saveIntegrationKey(clientId: string, id: IntegrationId, ke
 export async function clearIntegrationKeyAction(clientId: string, id: IntegrationId) {
   await hydrateSettings();
   clearIntegrationKey(clientId, id);
+  if (id === "ghl") {
+    await deleteGhlKey(clientId);
+  }
   await persistSettings();
   revalidatePath(`/dashboard/clients/${clientId}`);
   revalidatePath(`/dashboard/clients/${clientId}/settings`);
@@ -89,4 +98,12 @@ export async function saveAllFieldMappings(
   await persistSettings();
   revalidatePath(`/dashboard/clients/${clientId}`);
   revalidatePath(`/dashboard/clients/${clientId}/settings`);
+}
+
+export async function getDiscoveryForClient(clientId: string): Promise<DiscoverySnapshot> {
+  return getDiscoveryCached(clientId);
+}
+
+export async function refreshDiscoveryAction(clientId: string): Promise<DiscoverySnapshot> {
+  return refreshDiscovery(clientId);
 }
