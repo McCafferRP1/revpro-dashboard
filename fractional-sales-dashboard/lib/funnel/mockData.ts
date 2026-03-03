@@ -1,6 +1,7 @@
 import type { ClientFunnelConfig, Opportunity, MonthlyTarget, RepConfig, RepRole } from "./types";
 import { bbpFunnelConfig, bbpReps } from "./bbpConfig";
 import { clearClientIntegrations } from "./integrations";
+import { loadSettings, saveSettings } from "@/lib/settingsBlob";
 
 /** Base client configs (seed). Additional clients added via global Settings are in additionalClientsStore. */
 const clientConfigsBase: ClientFunnelConfig[] = [bbpFunnelConfig];
@@ -274,4 +275,32 @@ export function removeClient(clientId: string): boolean {
   mockTargetsStore = mockTargetsStore.filter((t) => t.clientId !== clientId);
   clearClientIntegrations(clientId);
   return true;
+}
+
+/** Load settings from Blobs into in-memory stores (call at start of request when on Netlify). */
+export async function hydrateSettings(): Promise<void> {
+  const data = await loadSettings();
+  if (!data) return;
+  additionalClientsStore.length = 0;
+  additionalClientsStore.push(...(data.additionalClients ?? []));
+  for (const k of Object.keys(clientOverridesStore)) delete clientOverridesStore[k];
+  if (data.clientOverrides) Object.assign(clientOverridesStore, data.clientOverrides);
+  if (data.reps?.length) {
+    repStore.length = 0;
+    repStore.push(...data.reps);
+  }
+  if (data.targets?.length) {
+    mockTargetsStore.length = 0;
+    mockTargetsStore.push(...data.targets);
+  }
+}
+
+/** Persist current in-memory settings to Blobs (call after any mutation). */
+export async function persistSettings(): Promise<void> {
+  await saveSettings({
+    additionalClients: [...additionalClientsStore],
+    clientOverrides: { ...clientOverridesStore },
+    reps: [...repStore],
+    targets: [...mockTargetsStore],
+  });
 }

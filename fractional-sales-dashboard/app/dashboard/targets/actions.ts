@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { upsertMockTarget } from "@/lib/funnel/mockData";
+import { upsertMockTarget, hydrateSettings, persistSettings } from "@/lib/funnel/mockData";
 
 export async function saveTargetsAction(params: {
   clientId: string;
@@ -14,6 +14,7 @@ export async function saveTargetsAction(params: {
   closedWonValue: number;
   closedWonCashCollected?: number;
 }) {
+  await hydrateSettings();
   upsertMockTarget({
     clientId: params.clientId,
     repId: null,
@@ -26,6 +27,7 @@ export async function saveTargetsAction(params: {
     closedWonValue: params.closedWonValue,
     closedWonCashCollected: params.closedWonCashCollected,
   });
+  await persistSettings();
   revalidatePath("/dashboard");
   revalidatePath(`/dashboard/clients/${params.clientId}/funnel`);
   revalidatePath(`/dashboard/clients/${params.clientId}/targets`);

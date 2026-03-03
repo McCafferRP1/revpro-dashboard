@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { upsertRep, deleteRep as deleteRepStore, setClientAccountManager, setClientReportLogo } from "@/lib/funnel/mockData";
+import { upsertRep, deleteRep as deleteRepStore, setClientAccountManager, setClientReportLogo, hydrateSettings, persistSettings } from "@/lib/funnel/mockData";
 import { setIntegrationKey, clearIntegrationKey, setFieldMapping, type IntegrationId } from "@/lib/funnel/integrations";
 import type { RepConfig } from "@/lib/funnel/types";
 
@@ -10,10 +10,12 @@ function slug(name: string): string {
 }
 
 export async function addOrUpdateRep(rep: RepConfig) {
+  await hydrateSettings();
   const toSave = rep.id
     ? rep
     : { ...rep, id: `${rep.clientId}-${slug(rep.name)}-${Math.random().toString(36).slice(2, 9)}` };
   upsertRep(toSave);
+  await persistSettings();
   revalidatePath(`/dashboard/clients/${toSave.clientId}`);
   revalidatePath(`/dashboard/clients/${toSave.clientId}/reps`);
   revalidatePath(`/dashboard/clients/${toSave.clientId}/funnel`);
@@ -22,7 +24,9 @@ export async function addOrUpdateRep(rep: RepConfig) {
 }
 
 export async function removeRep(clientId: string, repId: string) {
+  await hydrateSettings();
   deleteRepStore(clientId, repId);
+  await persistSettings();
   revalidatePath(`/dashboard/clients/${clientId}`);
   revalidatePath(`/dashboard/clients/${clientId}/reps`);
   revalidatePath(`/dashboard/clients/${clientId}/funnel`);
@@ -35,14 +39,18 @@ export async function setAccountManager(
   accountManagerId: string,
   accountManagerName: string
 ) {
+  await hydrateSettings();
   setClientAccountManager(clientId, accountManagerId, accountManagerName);
+  await persistSettings();
   revalidatePath(`/dashboard/clients/${clientId}`);
   revalidatePath(`/dashboard/clients/${clientId}/settings`);
   revalidatePath("/dashboard");
 }
 
 export async function setReportLogo(clientId: string, reportLogoUrl: string) {
+  await hydrateSettings();
   setClientReportLogo(clientId, reportLogoUrl.trim() || "");
+  await persistSettings();
   revalidatePath(`/dashboard/clients/${clientId}`);
   revalidatePath(`/dashboard/clients/${clientId}/settings`);
 }

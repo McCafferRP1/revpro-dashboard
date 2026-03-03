@@ -45,11 +45,10 @@ function seedUser(): User {
   };
 }
 
-/** In-memory fallback when not on Netlify (e.g. local dev). */
+/** In-memory fallback when Blobs unavailable (e.g. local dev). */
 let memoryStore: User[] = [seedUser()];
 
 async function getUsersStore(): Promise<User[]> {
-  if (process.env.NETLIFY !== "true") return memoryStore;
   try {
     const store = getStore({ name: "revpro-auth", consistency: "strong" });
     const raw = await store.get(BLOB_KEY);
@@ -66,13 +65,10 @@ async function getUsersStore(): Promise<User[]> {
 }
 
 async function setUsersStore(users: User[]): Promise<void> {
-  if (process.env.NETLIFY !== "true") {
-    memoryStore = users;
-    return;
-  }
   try {
     const store = getStore({ name: "revpro-auth", consistency: "strong" });
     await store.set(BLOB_KEY, JSON.stringify(users));
+    return;
   } catch {
     memoryStore = users;
   }

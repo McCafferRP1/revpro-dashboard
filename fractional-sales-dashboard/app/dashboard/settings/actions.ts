@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { addClient, removeClient, clearAccountManagerFromClients } from "@/lib/funnel/mockData";
+import { addClient, removeClient, clearAccountManagerFromClients, hydrateSettings, persistSettings } from "@/lib/funnel/mockData";
 import { addUser, removeUser, updateUser, getUsers } from "@/lib/auth";
 import type { UserRole } from "@/lib/auth";
 
@@ -11,7 +11,9 @@ export async function addClientAction(params: {
   accountManagerId?: string;
   accountManagerName?: string;
 }) {
+  await hydrateSettings();
   const config = addClient(params);
+  await persistSettings();
   revalidatePath("/dashboard/settings");
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/clients");
@@ -20,7 +22,9 @@ export async function addClientAction(params: {
 }
 
 export async function removeClientAction(clientId: string) {
+  await hydrateSettings();
   removeClient(clientId);
+  await persistSettings();
   revalidatePath("/dashboard/settings");
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/clients");
@@ -51,7 +55,9 @@ export async function removeUserAction(userId: string) {
   if (user?.isAdministrator && users.filter((u) => u.isAdministrator).length <= 1) {
     throw new Error("Cannot remove the last administrator.");
   }
+  await hydrateSettings();
   clearAccountManagerFromClients(userId);
+  await persistSettings();
   await removeUser(userId);
   revalidatePath("/dashboard/settings");
   revalidatePath("/dashboard");
