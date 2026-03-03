@@ -66,6 +66,7 @@ function buildMockOpportunities(): Opportunity[] {
     const stage = stages.find((s) => s.order === stageOrder)!;
     const entryStageOrder = isDirectClarity ? 3 : 1; // 1 = Discovery first, 3 = Clarity first
     const rep = reps[i % reps.length];
+    const setterRep = i % 10 < 7 ? rep : reps[(i + 1) % reps.length]; // ~70% same rep as setter, 30% different
     const dateCreated = new Date(y, m - 1, (i % day) + 1);
     const isWon = stage.outcome === "won";
     const dateClosed = isWon ? new Date(y, m - 1, (i % day) + 5) : null;
@@ -75,6 +76,8 @@ function buildMockOpportunities(): Opportunity[] {
       clientId: "bbp",
       repId: rep.id,
       repName: rep.name,
+      setterRepId: setterRep.id,
+      setterRepName: setterRep.name,
       stageOrder: stage.order,
       stageName: stage.displayName,
       entryStageOrder,
@@ -94,6 +97,7 @@ function buildMockOpportunities(): Opportunity[] {
     const stage = stages.find((s) => s.order === stageOrder)!;
     const entryStageOrder = isDirectClarity ? 3 : 1;
     const rep = reps[i % reps.length];
+    const setterRep = i % 10 < 7 ? rep : reps[(i + 1) % reps.length];
     const d = (i % 28) + 1;
     const dateCreated = new Date(lastYear, lastMonth - 1, d);
     const isWon = stage.outcome === "won";
@@ -103,6 +107,8 @@ function buildMockOpportunities(): Opportunity[] {
       clientId: "bbp",
       repId: rep.id,
       repName: rep.name,
+      setterRepId: setterRep.id,
+      setterRepName: setterRep.name,
       stageOrder: stage.order,
       stageName: stage.displayName,
       entryStageOrder,

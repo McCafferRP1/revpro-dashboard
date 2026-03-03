@@ -242,6 +242,7 @@ export default async function ClientFunnelPage({
                 <th className="text-right p-3 font-medium text-[var(--muted)]">CW MTD</th>
                 <th className="text-right p-3 font-medium text-[var(--muted)]">Target</th>
                 <th className="text-right p-3 font-medium text-[var(--muted)]">Pacing %</th>
+                <th className="text-right p-3 font-medium text-[var(--muted)]">Revenue sourced</th>
                 <th className="text-right p-3 font-medium text-[var(--muted)]">Discovery MTD</th>
                 <th className="text-right p-3 font-medium text-[var(--muted)]">Target</th>
                 <th className="text-right p-3 font-medium text-[var(--muted)]">Pacing %</th>
@@ -265,6 +266,7 @@ export default async function ClientFunnelPage({
                     <td className="p-3 text-right font-semibold tabular-nums" style={{ color: cwPacingColor }}>
                       {cwArrow} {r.pacingPct != null ? `${r.pacingPct}%` : "—"}
                     </td>
+                    <td className="p-3 text-right tabular-nums text-[var(--muted)]">${(r.sourcedWonValue ?? 0).toLocaleString()}</td>
                     <td className="p-3 text-right tabular-nums">{r.discoveryCalls}</td>
                     <td className="p-3 text-right text-[var(--muted)] tabular-nums">{r.targetDiscovery ?? "—"}</td>
                     <td className="p-3 text-right font-semibold tabular-nums" style={{ color: discPacingColor }}>

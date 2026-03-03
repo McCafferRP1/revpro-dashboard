@@ -31,16 +31,23 @@ export type RepRole = "setter" | "closer";
 
 export interface RepConfig {
   id: string;
+  /** Display name shown in the app. */
   name: string;
   clientId: string;
   role: RepRole;
+  /** GHL user ID for deal attribution (opportunities assigned to this user in GHL count as this rep's). */
+  ghlUserId?: string;
 }
 
 export interface Opportunity {
   id: string;
   clientId: string;
+  /** Deal owner (closer): gets revenue closed attribution. */
   repId: string | null;
   repName: string | null;
+  /** Setter (sourced the deal): gets revenue sourced attribution. */
+  setterRepId?: string | null;
+  setterRepName?: string | null;
   stageOrder: number;
   stageName: string;
   /** Stage at which this deal entered the pipeline (e.g. 1 = Discovery Scheduled, 3 = direct Clarity Scheduled). Used so Discovery metrics exclude direct-to-Clarity deals. */
@@ -99,6 +106,8 @@ export interface RepSummary {
   closedWonValue: number;
   /** Cash collected at point of sale (MTD). */
   closedWonCashCollected?: number;
+  /** Revenue sourced (won deals where this rep is setter). Setter attribution. */
+  sourcedWonValue?: number;
   winRatePct: number;
   avgCycleDays: number;
   mtdClosedValue?: number;

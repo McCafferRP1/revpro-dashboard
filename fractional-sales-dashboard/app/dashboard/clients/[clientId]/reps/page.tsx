@@ -301,6 +301,7 @@ export default async function ClientRepsPage({
             <tr className="border-b border-[var(--card-border)] bg-[var(--background)]">
               <th className="text-left p-3 font-medium text-[var(--muted)]">Rep Name</th>
               <th className="text-right p-3 font-medium text-[var(--muted)]">CW MTD</th>
+              <th className="text-right p-3 font-medium text-[var(--muted)]">Revenue sourced</th>
               <th className="text-right p-3 font-medium text-[var(--muted)]">Pacing %</th>
             </tr>
           </thead>
@@ -318,6 +319,7 @@ export default async function ClientRepsPage({
                   </Link>
                 </td>
                 <td className="p-3 text-right tabular-nums">${r.closedWonValue.toLocaleString()}</td>
+                <td className="p-3 text-right tabular-nums text-[var(--muted)]">${(r.sourcedWonValue ?? 0).toLocaleString()}</td>
                 <td
                   className="p-3 text-right tabular-nums"
                   style={{

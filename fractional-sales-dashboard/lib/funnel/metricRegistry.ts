@@ -23,6 +23,7 @@ export const METRIC_REGISTRY: MetricDef[] = [
   { key: "closedWonCount", label: "Closed Won (count)", hasTarget: true, format: "number", roleRelevant: ["closer"] },
   { key: "closedWonValue", label: "Revenue booked", hasTarget: true, format: "currency", roleRelevant: ["closer"] },
   { key: "closedWonCashCollected", label: "Cash collected (at point of sale)", hasTarget: true, format: "currency", roleRelevant: ["closer"] },
+  { key: "sourcedWonValue", label: "Revenue sourced", hasTarget: false, format: "currency", roleRelevant: ["setter"] },
   { key: "winRate", label: "Win Rate", hasTarget: false, format: "percent", roleRelevant: ["closer"] },
   { key: "avgDealSize", label: "Avg Deal Size", hasTarget: false, format: "currency", roleRelevant: ["closer"] },
   { key: "avgCycleDays", label: "Avg Cycle (days)", hasTarget: false, format: "days", roleRelevant: ["closer"] },
@@ -63,22 +64,24 @@ export function buildRepKpiCards(
     closedWonCount: number;
     closedWonValue: number;
     closedWonCashCollected?: number;
+    sourcedWonValue?: number;
     winRatePct: number;
     avgCycleDays: number;
     pacingPct?: number | null;
     discoveryPacingPct?: number | null;
   } | null,
-  teamMetrics: { repSummaries: { discoveryCalls: number; clarityCalls: number; closedWonCount: number; closedWonValue: number; closedWonCashCollected?: number; winRatePct: number }[] }
+  teamMetrics: { repSummaries: { discoveryCalls: number; clarityCalls: number; closedWonCount: number; closedWonValue: number; closedWonCashCollected?: number; sourcedWonValue?: number; winRatePct: number }[] }
 ): RepKpiCard[] {
   const keys = getMetricKeysForRole(role);
   const n = teamMetrics.repSummaries.length || 1;
-  const teamTotal = (k: "discoveryCalls" | "clarityCalls" | "closedWonCount" | "closedWonValue" | "closedWonCashCollected") =>
+  const teamTotal = (k: "discoveryCalls" | "clarityCalls" | "closedWonCount" | "closedWonValue" | "closedWonCashCollected" | "sourcedWonValue") =>
     teamMetrics.repSummaries.reduce((s, r) => s + (r[k] ?? 0), 0);
   const teamAvgDiscovery = Math.round(teamTotal("discoveryCalls") / n);
   const teamAvgClarity = Math.round(teamTotal("clarityCalls") / n);
   const teamAvgCWCount = Math.round(teamTotal("closedWonCount") / n);
   const teamAvgCWValue = Math.round(teamTotal("closedWonValue") / n);
   const teamAvgCashCollected = Math.round(teamTotal("closedWonCashCollected") / n);
+  const teamSourcedValue = teamTotal("sourcedWonValue");
   const teamWinRateAvg = teamMetrics.repSummaries.length
     ? Math.round(teamMetrics.repSummaries.reduce((s, r) => s + r.winRatePct, 0) / teamMetrics.repSummaries.length)
     : 0;
@@ -92,6 +95,7 @@ export function buildRepKpiCards(
     closedWonCount: { rep: repSummary?.closedWonCount ?? 0, team: teamAvgCWCount, pacing: null, format: "number" },
     closedWonValue: { rep: repSummary?.closedWonValue ?? 0, team: teamAvgCWValue, pacing: repSummary?.pacingPct ?? null, format: "currency" },
     closedWonCashCollected: { rep: repSummary?.closedWonCashCollected ?? 0, team: teamAvgCashCollected, pacing: null, format: "currency" },
+    sourcedWonValue: { rep: repSummary?.sourcedWonValue ?? 0, team: teamSourcedValue, pacing: null, format: "currency" },
     winRate: { rep: repSummary?.winRatePct ?? 0, team: teamWinRateAvg, pacing: null, format: "percent" },
     avgDealSize: { rep: repSummary?.closedWonValue && repSummary?.closedWonCount ? Math.round(repSummary.closedWonValue / repSummary.closedWonCount) : 0, team: teamAvgCWValue, pacing: null, format: "currency" },
     avgCycleDays: { rep: repSummary?.avgCycleDays ?? 0, team: 0, pacing: null, format: "days" },

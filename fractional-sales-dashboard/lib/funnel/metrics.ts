@@ -94,7 +94,7 @@ export interface ClientWeekMetrics {
   closedWonValue: number;
   closedWonCashCollected: number;
   winRatePct: number;
-  repSummaries: { repId: string; repName: string; closedWonValue: number; closedWonCashCollected: number; discoveryCalls: number; clarityCalls: number }[];
+  repSummaries: { repId: string; repName: string; closedWonValue: number; closedWonCashCollected: number; sourcedWonValue?: number; discoveryCalls: number; clarityCalls: number }[];
 }
 
 /** Client metrics for an arbitrary date range (e.g. previous week). */
@@ -132,6 +132,7 @@ export function getClientMetricsForDateRange(
   const clientReps = getRepsForClient(config.clientId);
   const repSummaries = clientReps.map((rep) => {
     const repWon = won.filter((o) => o.repId === rep.id);
+    const repSourcedWon = won.filter((o) => o.setterRepId === rep.id);
     const repDiscovery = leadOpps.filter((o) => o.repId === rep.id && o.entryStageOrder === 1).length;
     const repClarity = opps.filter(
       (o) =>
@@ -145,6 +146,7 @@ export function getClientMetricsForDateRange(
       repName: rep.name,
       closedWonValue: repWon.reduce((s, o) => s + o.amount, 0),
       closedWonCashCollected: repWon.reduce((s, o) => s + (o.cashCollected ?? 0), 0),
+      sourcedWonValue: repSourcedWon.reduce((s, o) => s + o.amount, 0),
       discoveryCalls: repDiscovery,
       clarityCalls: repClarity,
     };
@@ -309,9 +311,13 @@ export function getClientMetrics(
     const repWonInPeriod = opps.filter(
       (o) => o.repId === rep.id && o.outcome === "won" && o.dateClosed && o.dateClosed >= start && o.dateClosed <= end
     );
+    const repSourcedWonInPeriod = opps.filter(
+      (o) => o.setterRepId === rep.id && o.outcome === "won" && o.dateClosed && o.dateClosed >= start && o.dateClosed <= end
+    );
     const repClarityInPeriod = repOppsInPeriod.filter((o) => o.stageOrder >= 6);
     const repClosedValue = repWonInPeriod.reduce((s, o) => s + o.amount, 0);
     const repCashCollected = repWonInPeriod.reduce((s, o) => s + (o.cashCollected ?? 0), 0);
+    const repSourcedValue = repSourcedWonInPeriod.reduce((s, o) => s + o.amount, 0);
     const repDiscovery = opps.filter((o) => o.repId === rep.id && o.entryStageOrder === 1 && o.dateCreated >= start && o.dateCreated <= end).length;
     return {
       repId: rep.id,
@@ -323,6 +329,7 @@ export function getClientMetrics(
       closedWonCount: repWonInPeriod.length,
       closedWonValue: repClosedValue,
       closedWonCashCollected: repCashCollected,
+      sourcedWonValue: repSourcedValue,
       winRatePct: repClarityInPeriod.length ? Math.round((repWonInPeriod.length / repClarityInPeriod.length) * 1000) / 10 : 0,
       avgCycleDays: 0,
       targetClosedValue: repTargetClosedValue,
