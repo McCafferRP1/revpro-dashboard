@@ -3,6 +3,8 @@
 
 [build]
   command = "npm run build"
+  # Must differ from base directory (UI may lock publish to base; this overrides)
+  publish = ".next"
 
 [build.environment]
   NODE_VERSION = "20"
