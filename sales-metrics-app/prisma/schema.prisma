@@ -1,0 +1,162 @@
+// Sales Metrics & Coaching App - Phase 1 schema
+// Multi-tenant: Tenant = Client. Reps belong to one tenant. Deals/Calls scoped by tenant.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Tenant {
+  id        String   @id @default(cuid())
+  name      String   // e.g. "Client A"
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  reps         Rep[]
+  connections  Connection[]
+  deals        Deal[]
+  targets      Target[]
+  calls        Call[]
+  stageMapping StageMapping[]
+  dailyCheckIns DailyCheckIn[]
+}
+
+model Rep {
+  id        String   @id @default(cuid())
+  name      String
+  email     String?
+  tenantId  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  slackUserId   String?
+  discordUserId String?
+
+  tenant     Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  deals      Deal[]
+  calls      Call[]
+  dailyCheckIns DailyCheckIn[]
+  targets    Target[]
+  user       User?
+}
+
+model Connection {
+  id        String   @id @default(cuid())
+  type      String   // "gohighlevel" | "close"
+  tenantId  String
+  apiKeyEncrypted String?
+  config    Json?
+  lastSyncedAt DateTime?
+  lastError   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+}
+
+enum FunnelStage {
+  lead_in
+  meeting_booked
+  initial_meeting_done
+  initial_meeting_qualified
+  second_meeting_booked
+  closed_won
+  closed_lost
+}
+
+model Deal {
+  id             String       @id @default(cuid())
+  tenantId       String
+  repId          String?
+  externalId     String?
+  pipelineStage  FunnelStage
+  source         String       // "crm" | "manual"
+  dateCreated    DateTime?
+  dateMeetingBooked DateTime?
+  dateQualified  DateTime?
+  dateClosed     DateTime?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  rep    Rep?   @relation(fields: [repId], references: [id], onDelete: SetNull)
+}
+
+model Target {
+  id                String   @id @default(cuid())
+  tenantId          String
+  repId             String?
+  year              Int
+  month             Int      // 1-12
+  leadsIn            Int?
+  meetingsBooked    Int?
+  qualifiedMeetings  Int?
+  closedWon          Int?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  rep    Rep?   @relation(fields: [repId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, repId, year, month])
+}
+
+model Call {
+  id            String   @id @default(cuid())
+  tenantId      String
+  repId         String?
+  externalId    String?
+  recordingUrl  String?
+  transcriptText String?  @db.Text
+  callDate      DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  rep    Rep?   @relation(fields: [repId], references: [id], onDelete: SetNull)
+}
+
+model DailyCheckIn {
+  id          String   @id @default(cuid())
+  repId       String
+  tenantId    String
+  date        DateTime @db.Date
+  submittedAt DateTime @default(now())
+  source      String?
+  payload     Json
+  createdAt   DateTime @default(now())
+
+  rep    Rep    @relation(fields: [repId], references: [id], onDelete: Cascade)
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([repId, date])
+}
+
+model StageMapping {
+  id           String      @id @default(cuid())
+  tenantId     String
+  crmType      String
+  crmStageId   String?
+  crmStageName String?
+  funnelStage  FunnelStage
+  createdAt    DateTime    @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, crmType, crmStageId])
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String?
+  role         String   // "admin" | "rep"
+  repId        String?  @unique
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  rep Rep? @relation(fields: [repId], references: [id], onDelete: SetNull)
+}
