@@ -1,5 +1,6 @@
 import { getClientConfig, getMockTargets, getClientConfigs } from "@/lib/funnel/mockData";
 import { getClientMetrics } from "@/lib/funnel/metrics";
+import { getOpportunitiesForClient } from "@/lib/funnel/ghlSync";
 import Link from "next/link";
 import { FunnelFilters } from "@/app/dashboard/funnel/FunnelFilters";
 import { DiscoveryRefreshTrigger } from "@/app/dashboard/DiscoveryRefreshTrigger";
@@ -29,7 +30,8 @@ export default async function ClientFunnelPage({
     );
   }
 
-  const metrics = getClientMetrics(config, y, m, targets);
+  const opps = await getOpportunitiesForClient(clientId);
+  const metrics = getClientMetrics(config, y, m, targets, opps);
   const monthLabel = new Date(y, m - 1).toLocaleString("default", { month: "long", year: "numeric" });
   const maxStageCount = Math.max(1, ...metrics.stageCounts.map((s) => s.count));
   const maxCW = Math.max(1, ...metrics.weeklyTrends.map((t) => t.closedWonValue));

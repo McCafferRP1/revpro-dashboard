@@ -48,3 +48,39 @@ export async function fetchPipelines(token: string): Promise<GhlPipeline[]> {
     return [];
   }
 }
+
+/** Raw opportunity/deal from GHL (field names may vary; we map via user's field mappings). */
+export interface GhlOpportunityRaw {
+  id?: string;
+  name?: string;
+  pipelineId?: string;
+  pipelineStageId?: string;
+  status?: string;
+  monetaryValue?: number;
+  assignedTo?: string;
+  dateAdded?: string;
+  dateUpdated?: string;
+  [key: string]: unknown;
+}
+
+export interface GhlSearchOpportunitiesResponse {
+  opportunities?: GhlOpportunityRaw[];
+}
+
+/** Search opportunities (deals). POST with optional filters. Returns raw list; map to Opportunity in ghlSync. */
+export async function searchOpportunities(token: string): Promise<GhlOpportunityRaw[]> {
+  try {
+    const res = await fetch(`${GHL_BASE}/opportunities/search`, {
+      method: "POST",
+      headers: headers(token),
+      body: JSON.stringify({}),
+      cache: "no-store",
+    });
+    if (!res.ok) return [];
+    const data = (await res.json()) as GhlSearchOpportunitiesResponse & { data?: { opportunities?: GhlOpportunityRaw[] } };
+    const list = data?.opportunities ?? data?.data?.opportunities ?? [];
+    return Array.isArray(list) ? list : [];
+  } catch {
+    return [];
+  }
+}

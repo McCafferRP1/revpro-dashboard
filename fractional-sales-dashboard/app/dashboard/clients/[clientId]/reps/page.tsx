@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { getClientConfigs, getClientConfig, getMockTargets, getRepsForClient } from "@/lib/funnel/mockData";
 import { getClientMetrics, getRepDashboardData } from "@/lib/funnel/metrics";
+import { getOpportunitiesForClient } from "@/lib/funnel/ghlSync";
 import { buildRepKpiCards } from "@/lib/funnel/metricRegistry";
 import { RepFilters } from "@/app/dashboard/rep/[repId]/RepFilters";
 
@@ -55,8 +56,9 @@ export default async function ClientRepsPage({
   const m = Number.isNaN(month) || month < 1 || month > 12 ? now.getMonth() + 1 : month;
 
   const targets = getMockTargets();
+  const opps = await getOpportunitiesForClient(clientId);
 
-  const baseMetrics = getClientMetrics(config, y, m, targets);
+  const baseMetrics = getClientMetrics(config, y, m, targets, opps);
   const clientReps = getRepsForClient(config.clientId);
   const reps = clientReps.map((r) => ({ id: r.id, name: r.name }));
   const selectedRepId = search.repId ?? reps[0]?.id;
@@ -65,7 +67,7 @@ export default async function ClientRepsPage({
     return <p className="text-[var(--muted)]">No reps found for this client.</p>;
   }
 
-  const data = getRepDashboardData(config, selectedRepId, y, m, targets);
+  const data = getRepDashboardData(config, selectedRepId, y, m, targets, opps);
   const { repSummary, repStageCounts, teamStageCounts, stageTransitions, repWeekly, flaggedDeals, teamMetrics } = data;
 
   const monthLabel = new Date(y, m - 1).toLocaleString("default", { month: "long", year: "numeric" });

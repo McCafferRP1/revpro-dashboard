@@ -67,8 +67,8 @@ export function ClientIntegrationsSection({
           <span className="text-[var(--success)]">Pipelines &amp; stages:</span>
           <span className="text-[var(--muted)]"> active (Refresh below to load from GHL). </span>
           <span className="text-[var(--muted)]">Funnel/deal data:</span>
-          <span className="text-[var(--warning)]"> not yet synced from GHL</span>
-          <span className="text-[var(--muted)]"> — funnel still shows sample data until deal sync is added.</span>
+          <span className="text-[var(--success)]"> synced from GHL</span>
+          <span className="text-[var(--muted)]"> when key and mappings are set; otherwise sample data.</span>
         </div>
       )}
 

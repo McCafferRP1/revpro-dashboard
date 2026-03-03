@@ -11,6 +11,7 @@ import {
   getClientMetricsForDateRange,
   getPreviousWeekBounds,
 } from "@/lib/funnel/metrics";
+import { getOpportunitiesForClient } from "@/lib/funnel/ghlSync";
 import { ReportActions } from "./ReportActions";
 import { ReportPeriodSelector } from "./ReportPeriodSelector";
 
@@ -98,57 +99,62 @@ export default async function WeeklyReportPage({
           };
         });
       })()
-    : filteredConfigs.map((config) => {
-    const metrics = getClientMetrics(config, year, month, targets);
-    const lastMetrics = getClientMetrics(config, lastY, lastM, targets);
-    const merged = getClientConfig(config.clientId);
-    const closedNow =
-      metrics.kpis.find((k) => k.key === "closedWonValue")?.mtd ??
-      metrics.kpis.find((k) => k.label === "Closed Won (value)")?.mtd ??
-      0;
-    const closedLast =
-      lastMetrics.kpis.find((k) => k.key === "closedWonValue")?.mtd ??
-      lastMetrics.kpis.find((k) => k.label === "Closed Won (value)")?.mtd ??
-      0;
-    const momPct = closedLast ? Math.round(((closedNow - closedLast) / closedLast) * 100) : 0;
-    const cwKpi =
-      metrics.kpis.find((k) => k.key === "closedWonValue") ??
-      metrics.kpis.find((k) => k.label === "Closed Won (value)");
-    const pacing = cwKpi?.pacingPct ?? null;
-    const winRate =
-      metrics.kpis.find((k) => k.key === "winRate")?.mtd ??
-      metrics.kpis.find((k) => k.label === "Win Rate")?.mtd ??
-      0;
-    const leadsKpi = metrics.kpis.find((k) => k.key === "leadsIn") ?? metrics.kpis.find((k) => k.label === "Leads In");
-    const discoveryKpi =
-      metrics.kpis.find((k) => k.key === "discoveryScheduled") ??
-      metrics.kpis.find((k) => k.label === "Discovery Scheduled");
-    const clarityKpi =
-      metrics.kpis.find((k) => k.key === "clarityScheduledConfirmed") ??
-      metrics.kpis.find((k) => k.label === "Clarity Scheduled / Confirmed");
-    const targetCW = cwKpi?.target ?? 0;
-    return {
-      config,
-      accountManagerId: merged?.accountManagerId ?? "unassigned",
-      accountManagerName: merged?.accountManagerName ?? "—",
-      closedValue: closedNow,
-      momPct,
-      pacing,
-      winRate,
-      leadsMtd: leadsKpi?.mtd ?? 0,
-      leadsTarget: leadsKpi?.target ?? 0,
-      discoveryMtd: discoveryKpi?.mtd ?? 0,
-      discoveryTarget: discoveryKpi?.target ?? 0,
-      clarityMtd: clarityKpi?.mtd ?? 0,
-      cwTarget: targetCW,
-      repSummaries: metrics.repSummaries,
-    };
-  });
+    : await Promise.all(
+        filteredConfigs.map(async (config) => {
+          const opps = await getOpportunitiesForClient(config.clientId);
+          const metrics = getClientMetrics(config, year, month, targets, opps);
+          const lastMetrics = getClientMetrics(config, lastY, lastM, targets, opps);
+          const merged = getClientConfig(config.clientId);
+          const closedNow =
+            metrics.kpis.find((k) => k.key === "closedWonValue")?.mtd ??
+            metrics.kpis.find((k) => k.label === "Closed Won (value)")?.mtd ??
+            0;
+          const closedLast =
+            lastMetrics.kpis.find((k) => k.key === "closedWonValue")?.mtd ??
+            lastMetrics.kpis.find((k) => k.label === "Closed Won (value)")?.mtd ??
+            0;
+          const momPct = closedLast ? Math.round(((closedNow - closedLast) / closedLast) * 100) : 0;
+          const cwKpi =
+            metrics.kpis.find((k) => k.key === "closedWonValue") ??
+            metrics.kpis.find((k) => k.label === "Closed Won (value)");
+          const pacing = cwKpi?.pacingPct ?? null;
+          const winRate =
+            metrics.kpis.find((k) => k.key === "winRate")?.mtd ??
+            metrics.kpis.find((k) => k.label === "Win Rate")?.mtd ??
+            0;
+          const leadsKpi = metrics.kpis.find((k) => k.key === "leadsIn") ?? metrics.kpis.find((k) => k.label === "Leads In");
+          const discoveryKpi =
+            metrics.kpis.find((k) => k.key === "discoveryScheduled") ??
+            metrics.kpis.find((k) => k.label === "Discovery Scheduled");
+          const clarityKpi =
+            metrics.kpis.find((k) => k.key === "clarityScheduledConfirmed") ??
+            metrics.kpis.find((k) => k.label === "Clarity Scheduled / Confirmed");
+          const targetCW = cwKpi?.target ?? 0;
+          return {
+            config,
+            opps,
+            accountManagerId: merged?.accountManagerId ?? "unassigned",
+            accountManagerName: merged?.accountManagerName ?? "—",
+            closedValue: closedNow,
+            momPct,
+            pacing,
+            winRate,
+            leadsMtd: leadsKpi?.mtd ?? 0,
+            leadsTarget: leadsKpi?.target ?? 0,
+            discoveryMtd: discoveryKpi?.mtd ?? 0,
+            discoveryTarget: discoveryKpi?.target ?? 0,
+            clarityMtd: clarityKpi?.mtd ?? 0,
+            cwTarget: targetCW,
+            repSummaries: metrics.repSummaries,
+          };
+        })
+      );
 
   const totalClosed = clientData.reduce((s, d) => s + d.closedValue, 0);
   const totalTarget = clientData.reduce((s, d) => s + d.cwTarget, 0);
   const lastMonthClosed = clientData.reduce((s, d) => {
-    const last = getClientMetrics(d.config, lastY, lastM, targets);
+    const opps = "opps" in d ? d.opps : undefined;
+    const last = getClientMetrics(d.config, lastY, lastM, targets, opps);
     const v =
       last.kpis.find((k) => k.key === "closedWonValue")?.mtd ??
       last.kpis.find((k) => k.label === "Closed Won (value)")?.mtd ??

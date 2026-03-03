@@ -198,9 +198,10 @@ export function getClientMetrics(
   config: ClientFunnelConfig,
   year: number,
   month: number,
-  targets: MonthlyTarget[]
+  targets: MonthlyTarget[],
+  oppsOverride?: Opportunity[]
 ): ClientMetrics {
-  const opps = getMockOpportunities().filter((o) => o.clientId === config.clientId);
+  const opps = oppsOverride ?? getMockOpportunities().filter((o) => o.clientId === config.clientId);
   const { start, end } = getMonthBounds(year, month);
 
   const clientTarget = targets.find(
@@ -386,11 +387,12 @@ export function getRepDashboardData(
   repId: string,
   year: number,
   month: number,
-  targets: MonthlyTarget[]
+  targets: MonthlyTarget[],
+  oppsOverride?: Opportunity[]
 ): RepDashboardData {
-  const teamMetrics = getClientMetrics(config, year, month, targets);
+  const teamMetrics = getClientMetrics(config, year, month, targets, oppsOverride);
   const { conversionRows, stageCounts, repSummaries, weeklyTrends } = teamMetrics;
-  const opps = getMockOpportunities().filter((o) => o.clientId === config.clientId);
+  const opps = oppsOverride ?? getMockOpportunities().filter((o) => o.clientId === config.clientId);
   const { start, end } = getMonthBounds(year, month);
   const repOpps = opps.filter((o) => o.repId === repId);
 

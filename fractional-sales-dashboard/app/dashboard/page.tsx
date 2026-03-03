@@ -2,6 +2,7 @@ import Link from "next/link";
 import { getUsers } from "@/lib/auth";
 import { getClientConfigs, getClientConfig, getMockTargets, getAccountManagers } from "@/lib/funnel/mockData";
 import { getClientMetrics } from "@/lib/funnel/metrics";
+import { getOpportunitiesForClient } from "@/lib/funnel/ghlSync";
 import { PortfolioAccountManagerFilter } from "./PortfolioAccountManagerFilter";
 import { DiscoveryRefreshTrigger } from "./DiscoveryRefreshTrigger";
 
@@ -52,9 +53,11 @@ export default async function DashboardPage({
       ? allConfigs
       : allConfigs.filter((c) => (getClientConfig(c.clientId)?.accountManagerId ?? "unassigned") === accountManagerId);
 
-  const clientData = filteredConfigs.map((config) => {
-    const metrics = getClientMetrics(config, y, m, targets);
-    const lastMetrics = getClientMetrics(config, lastY, lastM, targets);
+  const clientData = await Promise.all(
+    filteredConfigs.map(async (config) => {
+      const opps = await getOpportunitiesForClient(config.clientId);
+      const metrics = getClientMetrics(config, y, m, targets, opps);
+      const lastMetrics = getClientMetrics(config, lastY, lastM, targets, opps);
     const closedNow = metrics.kpis.find((k) => k.key === "closedWonValue")?.mtd ?? metrics.kpis.find((k) => k.label === "Closed Won (value)")?.mtd ?? 0;
     const closedLast = lastMetrics.kpis.find((k) => k.key === "closedWonValue")?.mtd ?? lastMetrics.kpis.find((k) => k.label === "Closed Won (value)")?.mtd ?? 0;
     const momPct = closedLast ? Math.round(((closedNow - closedLast) / closedLast) * 100) : 0;
@@ -84,7 +87,8 @@ export default async function DashboardPage({
       cwTarget: targetCW,
       weeklyTrends: metrics.weeklyTrends,
     };
-  });
+    })
+  );
 
   const allReps: { repId: string; repName: string; clientId: string; clientName: string; mtdCW: number; target: number; pacingPct: number | null }[] = [];
   clientData.forEach(({ config, metrics }) => {
