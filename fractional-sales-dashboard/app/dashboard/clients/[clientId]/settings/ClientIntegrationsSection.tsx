@@ -60,6 +60,18 @@ export function ClientIntegrationsSection({
         This client&apos;s API key and field mapping. Each client has their own key so pipeline data maps to the correct account. Keys are stored securely and never shown in full after saving.
       </p>
 
+      {initialGhl.configured && (
+        <div className="rounded-lg border border-[var(--card-border)] bg-[var(--background)] px-3 py-2 text-xs">
+          <span className="font-medium text-[var(--foreground)]">Integration status:</span>
+          <span className="text-[var(--muted)]"> Key saved. </span>
+          <span className="text-[var(--success)]">Pipelines &amp; stages:</span>
+          <span className="text-[var(--muted)]"> active (Refresh below to load from GHL). </span>
+          <span className="text-[var(--muted)]">Funnel/deal data:</span>
+          <span className="text-[var(--warning)]"> not yet synced from GHL</span>
+          <span className="text-[var(--muted)]"> — funnel still shows sample data until deal sync is added.</span>
+        </div>
+      )}
+
       <div className="space-y-3">
         <h4 className="text-xs font-medium text-[var(--foreground)]">{INTEGRATION_LABELS.ghl}</h4>
         {initialGhl.configured ? (
