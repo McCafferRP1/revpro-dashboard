@@ -3,6 +3,8 @@ import { getClientConfig, hydrateSettings } from "@/lib/funnel/mockData";
 import { notFound } from "next/navigation";
 import { ClientTabs } from "./ClientTabs";
 
+export const dynamic = "force-dynamic";
+
 export default async function ClientLayout({
   children,
   params,

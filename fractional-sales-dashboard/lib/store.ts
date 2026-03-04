@@ -42,11 +42,15 @@ async function ensureDir(): Promise<void> {
   }
 }
 
-/** Get a value by key. Returns null if missing or on error. */
+function delay(ms: number): Promise<void> {
+  return new Promise((r) => setTimeout(r, ms));
+}
+
+/** Get a value by key. Returns null if missing or on error. Retries once on failure (helps with Neon cold start). */
 export async function storeGet(key: StoreKey): Promise<string | null> {
   const url = process.env.DATABASE_URL;
   if (url?.trim()) {
-    try {
+    const attempt = async (): Promise<string | null> => {
       const { Pool } = await import("pg");
       const pool = new Pool({ connectionString: url });
       try {
@@ -60,8 +64,16 @@ export async function storeGet(key: StoreKey): Promise<string | null> {
       } finally {
         await pool.end();
       }
+    };
+    try {
+      return await attempt();
     } catch {
-      return null;
+      try {
+        await delay(1800);
+        return await attempt();
+      } catch {
+        return null;
+      }
     }
   }
   if (storeRequiresDatabase()) {
