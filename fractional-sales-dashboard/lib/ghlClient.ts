@@ -67,13 +67,18 @@ export interface GhlSearchOpportunitiesResponse {
   opportunities?: GhlOpportunityRaw[];
 }
 
-/** Search opportunities (deals). POST with optional filters. Returns raw list; map to Opportunity in ghlSync. */
-export async function searchOpportunities(token: string): Promise<GhlOpportunityRaw[]> {
+/** Search opportunities (deals). POST with optional filters. pipelineId limits results to that pipeline. */
+export async function searchOpportunities(
+  token: string,
+  options?: { pipelineId?: string }
+): Promise<GhlOpportunityRaw[]> {
   try {
+    const body: Record<string, string> = {};
+    if (options?.pipelineId?.trim()) body.pipeline_id = options.pipelineId.trim();
     const res = await fetch(`${GHL_BASE}/opportunities/search`, {
       method: "POST",
       headers: headers(token),
-      body: JSON.stringify({}),
+      body: JSON.stringify(body),
       cache: "no-store",
     });
     if (!res.ok) return [];
@@ -106,6 +111,29 @@ export async function fetchUsers(token: string): Promise<GhlUser[]> {
     return Array.isArray(list) ? list : [];
   } catch {
     return [];
+  }
+}
+
+/** Raw contact from GHL (e.g. GET /contacts/:contactId). Custom fields may be at top level or under customFields. */
+export interface GhlContactRaw {
+  id?: string;
+  [key: string]: unknown;
+}
+
+/** Fetch a single contact by ID. Returns null on 404/auth failure. Used to merge contact custom fields into opportunity data. */
+export async function fetchContact(token: string, contactId: string): Promise<GhlContactRaw | null> {
+  if (!contactId?.trim()) return null;
+  try {
+    const res = await fetch(`${GHL_BASE}/contacts/${encodeURIComponent(contactId.trim())}`, {
+      method: "GET",
+      headers: headers(token),
+      cache: "no-store",
+    });
+    if (!res.ok) return null;
+    const data = (await res.json()) as GhlContactRaw;
+    return data ?? null;
+  } catch {
+    return null;
   }
 }
 

@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { upsertRep, deleteRep as deleteRepStore, setClientAccountManager, setClientReportLogo, hydrateSettings, persistSettings } from "@/lib/funnel/mockData";
+import { upsertRep, deleteRep as deleteRepStore, setClientAccountManager, setClientReportLogo, setClientGhlPipelineId, hydrateSettings, persistSettings } from "@/lib/funnel/mockData";
 import { setIntegrationKey, clearIntegrationKey, setFieldMapping, setFieldMappings, type IntegrationId } from "@/lib/funnel/integrations";
 import { setGhlKey, deleteGhlKey } from "@/lib/ghlKeys";
 import { getDiscoveryCached, refreshDiscovery, clearDiscoveryCache, type DiscoverySnapshot } from "@/lib/funnel/ghlDiscovery";
@@ -56,6 +56,16 @@ export async function setReportLogo(clientId: string, reportLogoUrl: string) {
   await persistSettings();
   revalidatePath(`/dashboard/clients/${clientId}`);
   revalidatePath(`/dashboard/clients/${clientId}/settings`);
+}
+
+export async function saveGhlPipelineId(clientId: string, ghlPipelineId: string) {
+  await hydrateSettings();
+  setClientGhlPipelineId(clientId, ghlPipelineId.trim() || "");
+  await persistSettings();
+  clearOpportunityCache(clientId);
+  revalidatePath(`/dashboard/clients/${clientId}`);
+  revalidatePath(`/dashboard/clients/${clientId}/settings`);
+  revalidatePath(`/dashboard/clients/${clientId}/funnel`);
 }
 
 export async function saveIntegrationKey(clientId: string, id: IntegrationId, key: string) {

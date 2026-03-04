@@ -43,6 +43,8 @@ export const REVPRO_FIELDS: { key: string; label: string }[] = [
   { key: "dealOutcome", label: "Deal outcome (won/lost)" },
   { key: "setterGhlUserId", label: "Setter / sourced-by (GHL user ID)" },
   { key: "setterAction", label: "Setter action (sourced vs confirmed)" },
+  { key: "contactTotalAmount", label: "Contact total amount (from contact custom field)" },
+  { key: "contactUpfrontCc", label: "Contact upfront CC (from contact custom field)" },
 ];
 
 function getClientIntegrations(clientId: string): Record<IntegrationId, IntegrationConfig> {

@@ -175,10 +175,10 @@ export function upsertMockTarget(t: MonthlyTarget): void {
   else mockTargetsStore.push(next);
 }
 
-/** Per-client overrides (e.g. account manager, report logo). Merged into base config by getClientConfig. */
+/** Per-client overrides (e.g. account manager, report logo, GHL pipeline filter). Merged into base config by getClientConfig. */
 const clientOverridesStore: Record<
   string,
-  { accountManagerId?: string; accountManagerName?: string; reportLogoUrl?: string }
+  { accountManagerId?: string; accountManagerName?: string; reportLogoUrl?: string; ghlPipelineId?: string }
 > = {};
 
 export function getClientConfig(clientId: string): ClientFunnelConfig | null {
@@ -210,6 +210,12 @@ export function clearAccountManagerFromClients(accountManagerId: string): void {
 /** Set report logo URL for a client (shown on client-specific reports/exports). */
 export function setClientReportLogo(clientId: string, reportLogoUrl: string): void {
   clientOverridesStore[clientId] = { ...clientOverridesStore[clientId], reportLogoUrl: reportLogoUrl || undefined };
+}
+
+/** Set GHL pipeline ID filter for a client (only opportunities from this pipeline are synced). */
+export function setClientGhlPipelineId(clientId: string, ghlPipelineId: string): void {
+  const trimmed = ghlPipelineId?.trim() || "";
+  clientOverridesStore[clientId] = { ...clientOverridesStore[clientId], ghlPipelineId: trimmed || undefined };
 }
 
 /** Unique account managers for dropdown/filter: assigned from client configs plus users with role account_manager. */

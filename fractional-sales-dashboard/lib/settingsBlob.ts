@@ -12,7 +12,7 @@ const BLOB_KEY = "data";
 
 export interface SettingsSnapshot {
   additionalClients: ClientFunnelConfig[];
-  clientOverrides: Record<string, { accountManagerId?: string; accountManagerName?: string; reportLogoUrl?: string }>;
+  clientOverrides: Record<string, { accountManagerId?: string; accountManagerName?: string; reportLogoUrl?: string; ghlPipelineId?: string }>;
   reps: RepConfig[];
   targets: MonthlyTarget[];
   integrations?: IntegrationsSnapshot["integrations"];

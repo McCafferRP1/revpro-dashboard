@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { REVPRO_FIELDS, type IntegrationId } from "@/lib/funnel/integrations";
-import { saveIntegrationKey, clearIntegrationKeyAction, saveAllFieldMappings, refreshDiscoveryAction } from "./actions";
+import { saveIntegrationKey, clearIntegrationKeyAction, saveAllFieldMappings, refreshDiscoveryAction, saveGhlPipelineId } from "./actions";
 import type { DiscoverySnapshot } from "@/lib/funnel/ghlDiscovery";
 
 const INTEGRATION_LABELS: Record<IntegrationId, string> = {
@@ -16,17 +16,22 @@ const hasMappings = (mappings: { ourField: string; theirField: string }[]) =>
 export function ClientIntegrationsSection({
   clientId,
   initialGhl,
+  initialGhlPipelineId = "",
   initialMappings,
   initialDiscovery,
   isAdministrator = false,
 }: {
   clientId: string;
   initialGhl: { configured: boolean; maskedKey?: string };
+  initialGhlPipelineId?: string;
   initialMappings: { ourField: string; theirField: string }[];
   initialDiscovery?: DiscoverySnapshot | null;
   isAdministrator?: boolean;
 }) {
   const [ghlKey, setGhlKey] = useState("");
+  const [ghlPipelineId, setGhlPipelineId] = useState(initialGhlPipelineId);
+  const [savingPipelineId, setSavingPipelineId] = useState(false);
+  useEffect(() => setGhlPipelineId(initialGhlPipelineId), [initialGhlPipelineId]);
   const [mappings, setMappings] = useState<Record<string, string>>(
     Object.fromEntries(initialMappings.map((m) => [m.ourField, m.theirField]))
   );
@@ -56,6 +61,12 @@ export function ClientIntegrationsSection({
     const result = await refreshDiscoveryAction(clientId);
     setDiscovery(result);
     setRefreshingDiscovery(false);
+  }
+
+  async function handleSavePipelineId() {
+    setSavingPipelineId(true);
+    await saveGhlPipelineId(clientId, ghlPipelineId);
+    setSavingPipelineId(false);
   }
 
   return (
@@ -117,6 +128,32 @@ export function ClientIntegrationsSection({
               </button>
             </div>
           )}
+        </div>
+      )}
+
+      {isAdministrator && (
+        <div className="space-y-3">
+          <h4 className="text-xs font-medium text-[var(--foreground)]">GHL pipeline filter (optional)</h4>
+          <p className="text-xs text-[var(--muted)]">
+            Sync only opportunities from one pipeline. Paste the pipeline ID from GHL (e.g. from pipeline settings or the API). Leave empty to sync all pipelines.
+          </p>
+          <div className="flex flex-wrap items-center gap-3">
+            <input
+              type="text"
+              value={ghlPipelineId}
+              onChange={(e) => setGhlPipelineId(e.target.value)}
+              className="rounded-lg border border-[var(--card-border)] bg-[var(--background)] px-3 py-2 text-sm text-[var(--foreground)] w-72 font-mono"
+              placeholder="e.g. 4vDkqscU90FTCPRZq4E6"
+            />
+            <button
+              type="button"
+              onClick={handleSavePipelineId}
+              disabled={savingPipelineId}
+              className="rounded bg-[var(--accent)] text-white px-3 py-2 text-sm font-medium hover:opacity-90 disabled:opacity-50"
+            >
+              {savingPipelineId ? "Saving…" : "Save pipeline filter"}
+            </button>
+          </div>
         </div>
       )}
 

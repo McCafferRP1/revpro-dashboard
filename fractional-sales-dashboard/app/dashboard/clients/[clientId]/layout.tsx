@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { getClientConfig } from "@/lib/funnel/mockData";
+import { getClientConfig, hydrateSettings } from "@/lib/funnel/mockData";
 import { notFound } from "next/navigation";
 import { ClientTabs } from "./ClientTabs";
 
@@ -11,6 +11,7 @@ export default async function ClientLayout({
   params: Promise<{ clientId: string }>;
 }) {
   const { clientId } = await params;
+  await hydrateSettings();
   const config = getClientConfig(clientId);
   if (!config) notFound();
 

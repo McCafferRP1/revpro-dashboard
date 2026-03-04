@@ -24,6 +24,8 @@ export interface ClientFunnelConfig {
   accountManagerName?: string;
   /** Logo URL for this client's reports (e.g. client logo on PDF/exports). Set in client Settings. */
   reportLogoUrl?: string;
+  /** GHL pipeline ID to sync only opportunities from this pipeline (optional). Set in client Settings → GHL. */
+  ghlPipelineId?: string;
 }
 
 /** Rep assigned to a client with a role for role-based KPIs (setter vs closer). */

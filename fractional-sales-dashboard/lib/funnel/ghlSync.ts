@@ -5,10 +5,10 @@
 
 import type { Opportunity } from "./types";
 import { getGhlKey } from "@/lib/ghlKeys";
-import { searchOpportunities, type GhlOpportunityRaw } from "@/lib/ghlClient";
+import { searchOpportunities, fetchContact, type GhlOpportunityRaw, type GhlContactRaw } from "@/lib/ghlClient";
 import { getFieldMappings } from "./integrations";
 import { getDiscoveryCached, refreshDiscoveryIfNeeded } from "./ghlDiscovery";
-import { getRepsForClient, getMockOpportunities } from "./mockData";
+import { getRepsForClient, getMockOpportunities, getClientConfig } from "./mockData";
 
 const OPP_CACHE_TTL_MS = 2 * 60 * 1000; // 2 min
 
@@ -52,19 +52,33 @@ function parseNumber(v: unknown): number {
   return 0;
 }
 
-/** Map GHL raw opportunity to RevPro Opportunity using mappings and discovery. */
-function mapGhlToOpportunity(
+/** Merge contact into a deal record so mappings like "contact.total_amount" resolve. Flattens contact.customFields onto contact. */
+function mergeContactIntoDeal(
   raw: GhlOpportunityRaw,
+  contact: GhlContactRaw | null
+): Record<string, unknown> {
+  const deal = { ...raw } as Record<string, unknown>;
+  if (!contact) return deal;
+  const customFields = (contact as Record<string, unknown>).customFields as Record<string, unknown> | undefined;
+  const contactFlat = { ...contact, ...(customFields ?? {}) } as Record<string, unknown>;
+  deal.contact = contactFlat;
+  return deal;
+}
+
+/** Map GHL raw opportunity (or merged deal+contact) to RevPro Opportunity using mappings and discovery. */
+function mapGhlToOpportunity(
+  rawOrMerged: GhlOpportunityRaw | Record<string, unknown>,
   clientId: string,
   mappings: Record<string, string>,
   stageIdToOrder: Map<string, number>,
   stageIdToName: Map<string, string>,
   reps: { id: string; name: string; ghlUserId?: string }[]
 ): Opportunity {
+  const raw = rawOrMerged as GhlOpportunityRaw;
   const get = (ourField: string): unknown => {
     const theirField = mappings[ourField];
     if (!theirField) return undefined;
-    return getByPath(raw as Record<string, unknown>, theirField);
+    return getByPath(rawOrMerged as Record<string, unknown>, theirField);
   };
 
   const pipelineStageId = String(get("pipelineStageId") ?? raw.pipelineStageId ?? "").trim();
@@ -142,9 +156,20 @@ export async function getOpportunitiesFromGhl(clientId: string): Promise<{ opps:
   const reps = getRepsForClient(clientId);
 
   try {
-    const rawList = await searchOpportunities(key);
-    const opps = rawList.map((raw) =>
-      mapGhlToOpportunity(raw, clientId, mappings, stageIdToOrder, stageIdToName, reps)
+    const config = getClientConfig(clientId);
+    const pipelineId = config?.ghlPipelineId?.trim();
+    const rawList = await searchOpportunities(key, pipelineId ? { pipelineId } : undefined);
+    const contactIdPath = mappings.contactId?.trim() || "contactId";
+    const mergedList = await Promise.all(
+      rawList.map(async (raw) => {
+        const contactIdRaw = getByPath(raw as Record<string, unknown>, contactIdPath) ?? (raw as Record<string, unknown>).contactId;
+        const contactId = contactIdRaw != null ? String(contactIdRaw).trim() : "";
+        const contact = contactId ? await fetchContact(key, contactId) : null;
+        return mergeContactIntoDeal(raw, contact);
+      })
+    );
+    const opps = mergedList.map((merged) =>
+      mapGhlToOpportunity(merged, clientId, mappings, stageIdToOrder, stageIdToName, reps)
     );
     return { opps };
   } catch {

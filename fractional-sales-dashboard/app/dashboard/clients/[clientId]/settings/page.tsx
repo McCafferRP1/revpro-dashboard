@@ -49,6 +49,7 @@ export default async function ClientSettingsPage({
       <ClientIntegrationsSection
         clientId={clientId}
         initialGhl={ghl}
+        initialGhlPipelineId={config.ghlPipelineId ?? ""}
         initialMappings={ghlMappings}
         initialDiscovery={initialDiscovery}
         isAdministrator={isAdministrator}
