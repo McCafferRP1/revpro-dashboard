@@ -1,6 +1,7 @@
 "use client";
 
 import type { ClientFunnelConfig } from "@/lib/funnel/types";
+import Link from "next/link";
 
 const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 
@@ -10,6 +11,11 @@ export function FunnelFilters({
   year,
   month,
   monthLabel,
+  currentYear,
+  currentMonth,
+  lastMonthYear,
+  lastMonthMonth,
+  lastMonthLabel,
   useClientRoutes,
 }: {
   clientId: string;
@@ -17,9 +23,20 @@ export function FunnelFilters({
   year: number;
   month: number;
   monthLabel: string;
+  currentYear?: number;
+  currentMonth?: number;
+  lastMonthYear?: number;
+  lastMonthMonth?: number;
+  lastMonthLabel?: string;
   /** When true, changing client goes to /dashboard/clients/[clientId]/funnel */
   useClientRoutes?: boolean;
 }) {
+  const now = new Date();
+  const currY = currentYear ?? now.getFullYear();
+  const currM = currentMonth ?? now.getMonth() + 1;
+  const isViewingThisMonth = year === currY && month === currM;
+  const funnelBase = useClientRoutes ? `${basePath}/dashboard/clients/${clientId}/funnel` : `${basePath}/dashboard/funnel`;
+
   return (
     <div className="flex flex-wrap items-center gap-6 rounded-xl border border-[var(--card-border)] bg-[var(--card)] px-5 py-4 shadow-lg">
       <div className="flex items-center gap-2">
@@ -30,7 +47,7 @@ export function FunnelFilters({
           onChange={(e) => {
             const newId = e.target.value;
             if (useClientRoutes) {
-              window.location.href = `${basePath}/dashboard/clients/${newId}/funnel`;
+              window.location.href = `${basePath}/dashboard/clients/${newId}/funnel?year=${year}&month=${month}`;
             } else {
               const url = new URL(window.location.href);
               url.searchParams.set("clientId", newId);
@@ -45,7 +62,23 @@ export function FunnelFilters({
       </div>
       <div className="flex items-center gap-2">
         <span className="text-xs font-medium text-[var(--muted)]">Date range</span>
-        <span className="text-sm font-semibold text-[var(--foreground)] px-3 py-2 rounded-lg bg-[var(--background)]">{monthLabel}</span>
+        <div className="flex gap-1">
+          <Link
+            href={`${funnelBase}?year=${currY}&month=${currM}`}
+            className={`px-3 py-2 text-sm rounded-lg ${isViewingThisMonth ? "bg-[var(--accent)] text-white font-medium" : "bg-[var(--background)] text-[var(--foreground)]"}`}
+          >
+            This month
+          </Link>
+          {lastMonthYear != null && lastMonthMonth != null && (
+            <Link
+              href={`${funnelBase}?year=${lastMonthYear}&month=${lastMonthMonth}`}
+              className={`px-3 py-2 text-sm rounded-lg ${!isViewingThisMonth && year === lastMonthYear && month === lastMonthMonth ? "bg-[var(--accent)] text-white font-medium" : "bg-[var(--background)] text-[var(--foreground)]"}`}
+            >
+              {lastMonthLabel ?? "Last month"}
+            </Link>
+          )}
+        </div>
+        <span className="text-sm text-[var(--muted)]">{monthLabel}</span>
       </div>
       <div className="flex items-center gap-2">
         <span className="text-xs font-medium text-[var(--muted)]">Pipeline type</span>

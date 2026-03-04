@@ -4,7 +4,8 @@ import { revalidatePath } from "next/cache";
 import { upsertRep, deleteRep as deleteRepStore, setClientAccountManager, setClientReportLogo, hydrateSettings, persistSettings } from "@/lib/funnel/mockData";
 import { setIntegrationKey, clearIntegrationKey, setFieldMapping, setFieldMappings, type IntegrationId } from "@/lib/funnel/integrations";
 import { setGhlKey, deleteGhlKey } from "@/lib/ghlKeys";
-import { getDiscoveryCached, refreshDiscovery, type DiscoverySnapshot } from "@/lib/funnel/ghlDiscovery";
+import { getDiscoveryCached, refreshDiscovery, clearDiscoveryCache, type DiscoverySnapshot } from "@/lib/funnel/ghlDiscovery";
+import { clearOpportunityCache } from "@/lib/funnel/ghlSync";
 import type { RepConfig } from "@/lib/funnel/types";
 
 function slug(name: string): string {
@@ -74,6 +75,8 @@ export async function clearIntegrationKeyAction(clientId: string, id: Integratio
   clearIntegrationKey(clientId, id);
   if (id === "ghl") {
     await deleteGhlKey(clientId);
+    clearDiscoveryCache(clientId);
+    clearOpportunityCache(clientId);
   }
   await persistSettings();
   revalidatePath(`/dashboard/clients/${clientId}`);

@@ -101,9 +101,9 @@ export default async function WeeklyReportPage({
       })()
     : await Promise.all(
         filteredConfigs.map(async (config) => {
-          const opps = await getOpportunitiesForClient(config.clientId);
-          const metrics = getClientMetrics(config, year, month, targets, opps);
-          const lastMetrics = getClientMetrics(config, lastY, lastM, targets, opps);
+          const oppsResult = await getOpportunitiesForClient(config.clientId);
+          const metrics = getClientMetrics(config, year, month, targets, oppsResult.opps);
+          const lastMetrics = getClientMetrics(config, lastY, lastM, targets, oppsResult.opps);
           const merged = getClientConfig(config.clientId);
           const closedNow =
             metrics.kpis.find((k) => k.key === "closedWonValue")?.mtd ??
@@ -132,7 +132,7 @@ export default async function WeeklyReportPage({
           const targetCW = cwKpi?.target ?? 0;
           return {
             config,
-            opps,
+            oppsResult,
             accountManagerId: merged?.accountManagerId ?? "unassigned",
             accountManagerName: merged?.accountManagerName ?? "—",
             closedValue: closedNow,
@@ -153,7 +153,7 @@ export default async function WeeklyReportPage({
   const totalClosed = clientData.reduce((s, d) => s + d.closedValue, 0);
   const totalTarget = clientData.reduce((s, d) => s + d.cwTarget, 0);
   const lastMonthClosed = clientData.reduce((s, d) => {
-    const opps = "opps" in d ? d.opps : undefined;
+    const opps = "oppsResult" in d ? d.oppsResult?.opps : undefined;
     const last = getClientMetrics(d.config, lastY, lastM, targets, opps);
     const v =
       last.kpis.find((k) => k.key === "closedWonValue")?.mtd ??

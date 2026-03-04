@@ -19,6 +19,9 @@ export default async function ClientFunnelPage({
   const month = search.month ? parseInt(search.month, 10) : now.getMonth() + 1;
   const y = Number.isNaN(year) ? now.getFullYear() : year;
   const m = Number.isNaN(month) || month < 1 || month > 12 ? now.getMonth() + 1 : month;
+  const lastM = m === 1 ? 12 : m - 1;
+  const lastY = m === 1 ? y - 1 : y;
+  const lastMonthLabel = new Date(lastY, lastM - 1).toLocaleString("default", { month: "long", year: "numeric" });
 
   const config = getClientConfig(clientId);
   const targets = getMockTargets();
@@ -30,7 +33,8 @@ export default async function ClientFunnelPage({
     );
   }
 
-  const opps = await getOpportunitiesForClient(clientId);
+  const oppsResult = await getOpportunitiesForClient(clientId);
+  const opps = oppsResult.opps;
   const metrics = getClientMetrics(config, y, m, targets, opps);
   const monthLabel = new Date(y, m - 1).toLocaleString("default", { month: "long", year: "numeric" });
   const maxStageCount = Math.max(1, ...metrics.stageCounts.map((s) => s.count));
@@ -42,15 +46,45 @@ export default async function ClientFunnelPage({
   const daysElapsed = isCurrentMonth ? Math.min(now.getDate(), daysInMonth) : Math.min(15, daysInMonth);
   const expectedByTodayPct = daysInMonth > 0 ? (daysElapsed / daysInMonth) * 100 : 50;
 
+  const showConnectGhl = oppsResult.source === "error" && oppsResult.error === "no_key";
+  const showConfigureMappings = oppsResult.source === "error" && oppsResult.error === "no_mappings";
+  const showSyncError = oppsResult.source === "error" && oppsResult.error === "api_error";
+
   return (
     <div className="space-y-6">
       <DiscoveryRefreshTrigger clientId={clientId} />
+      {showConnectGhl && (
+        <div className="rounded-xl border border-[var(--card-border)] bg-[var(--card)] p-6 text-center shadow-lg">
+          <p className="text-lg font-medium text-[var(--foreground)]">Connect Go High Level</p>
+          <p className="mt-2 text-sm text-[var(--muted)]">Connect your GHL account in Settings to see live pipeline data.</p>
+          <Link href={`/dashboard/clients/${clientId}/settings`} className="mt-4 inline-block rounded bg-[var(--accent)] text-white px-4 py-2 text-sm font-medium hover:opacity-90">Go to Settings →</Link>
+        </div>
+      )}
+      {showConfigureMappings && (
+        <div className="rounded-xl border border-[var(--card-border)] bg-[var(--card)] p-6 text-center shadow-lg">
+          <p className="text-lg font-medium text-[var(--foreground)]">Field Mappings Required</p>
+          <p className="mt-2 text-sm text-[var(--muted)]">GHL is connected but field mappings aren&apos;t configured yet.</p>
+          <Link href={`/dashboard/clients/${clientId}/settings`} className="mt-4 inline-block rounded bg-[var(--accent)] text-white px-4 py-2 text-sm font-medium hover:opacity-90">Configure Mappings →</Link>
+        </div>
+      )}
+      {showSyncError && (
+        <div className="rounded-xl border border-[var(--danger)]/50 bg-[var(--card)] p-6 text-center shadow-lg">
+          <p className="text-lg font-medium text-[var(--foreground)]">Unable to sync with Go High Level</p>
+          <p className="mt-2 text-sm text-[var(--muted)]">Check your API key and field mappings in Settings.</p>
+          <Link href={`/dashboard/clients/${clientId}/settings`} className="mt-4 inline-block rounded bg-[var(--accent)] text-white px-4 py-2 text-sm font-medium hover:opacity-90">Go to Settings →</Link>
+        </div>
+      )}
       <FunnelFilters
         clientId={clientId}
         clients={getClientConfigs()}
         year={y}
         month={m}
         monthLabel={monthLabel}
+        currentYear={now.getFullYear()}
+        currentMonth={now.getMonth() + 1}
+        lastMonthYear={lastY}
+        lastMonthMonth={lastM}
+        lastMonthLabel={lastMonthLabel}
         useClientRoutes
       />
 

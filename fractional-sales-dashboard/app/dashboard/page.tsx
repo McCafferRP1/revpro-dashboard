@@ -55,9 +55,9 @@ export default async function DashboardPage({
 
   const clientData = await Promise.all(
     filteredConfigs.map(async (config) => {
-      const opps = await getOpportunitiesForClient(config.clientId);
-      const metrics = getClientMetrics(config, y, m, targets, opps);
-      const lastMetrics = getClientMetrics(config, lastY, lastM, targets, opps);
+      const oppsResult = await getOpportunitiesForClient(config.clientId);
+      const metrics = getClientMetrics(config, y, m, targets, oppsResult.opps);
+      const lastMetrics = getClientMetrics(config, lastY, lastM, targets, oppsResult.opps);
     const closedNow = metrics.kpis.find((k) => k.key === "closedWonValue")?.mtd ?? metrics.kpis.find((k) => k.label === "Closed Won (value)")?.mtd ?? 0;
     const closedLast = lastMetrics.kpis.find((k) => k.key === "closedWonValue")?.mtd ?? lastMetrics.kpis.find((k) => k.label === "Closed Won (value)")?.mtd ?? 0;
     const momPct = closedLast ? Math.round(((closedNow - closedLast) / closedLast) * 100) : 0;

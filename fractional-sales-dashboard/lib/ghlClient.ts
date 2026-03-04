@@ -84,3 +84,51 @@ export async function searchOpportunities(token: string): Promise<GhlOpportunity
     return [];
   }
 }
+
+export interface GhlUser {
+  id: string;
+  name: string;
+  email?: string;
+  role?: string;
+}
+
+/** Fetch users from GHL location. */
+export async function fetchUsers(token: string): Promise<GhlUser[]> {
+  try {
+    const res = await fetch(`${GHL_BASE}/users/`, {
+      method: "GET",
+      headers: headers(token),
+      cache: "no-store",
+    });
+    if (!res.ok) return [];
+    const data = (await res.json()) as { users?: GhlUser[] };
+    const list = data?.users ?? [];
+    return Array.isArray(list) ? list : [];
+  } catch {
+    return [];
+  }
+}
+
+/** Create a stage in a GHL pipeline. */
+export async function createPipelineStage(
+  token: string,
+  pipelineId: string,
+  stage: { name: string }
+): Promise<GhlPipelineStage | null> {
+  try {
+    const res = await fetch(
+      `${GHL_BASE}/opportunities/pipelines/${pipelineId}/stages`,
+      {
+        method: "POST",
+        headers: headers(token),
+        body: JSON.stringify({ name: stage.name }),
+        cache: "no-store",
+      }
+    );
+    if (!res.ok) return null;
+    const data = (await res.json()) as GhlPipelineStage;
+    return data?.id ? data : null;
+  } catch {
+    return null;
+  }
+}

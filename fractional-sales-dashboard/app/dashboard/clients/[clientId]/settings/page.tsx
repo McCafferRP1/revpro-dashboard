@@ -1,4 +1,4 @@
-import { getUsers } from "@/lib/auth";
+import { getSession, getUsers } from "@/lib/auth";
 import { getClientConfig, getRepsForClient, getAccountManagers } from "@/lib/funnel/mockData";
 import { getIntegration, getFieldMappings } from "@/lib/funnel/integrations";
 import { getDiscoveryCached } from "@/lib/funnel/ghlDiscovery";
@@ -25,6 +25,8 @@ export default async function ClientSettingsPage({
   const reps = getRepsForClient(clientId);
   const users = await getUsers();
   const accountManagers = getAccountManagers(users);
+  const session = await getSession();
+  const isAdministrator = session?.isAdministrator ?? false;
   const ghl = getIntegration(clientId, "ghl");
   const ghlMappings = getFieldMappings(clientId, "ghl");
   const initialDiscovery = getDiscoveryCached(clientId);
@@ -49,6 +51,7 @@ export default async function ClientSettingsPage({
         initialGhl={ghl}
         initialMappings={ghlMappings}
         initialDiscovery={initialDiscovery}
+        isAdministrator={isAdministrator}
       />
 
       <RepManager clientId={clientId} reps={reps} />

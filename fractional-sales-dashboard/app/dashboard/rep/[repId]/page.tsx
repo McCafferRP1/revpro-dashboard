@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { getClientConfig, getMockTargets, getClientConfigs, getRepById, getRepsForClient } from "@/lib/funnel/mockData";
 import { getRepDashboardData } from "@/lib/funnel/metrics";
+import { getOpportunitiesForClient } from "@/lib/funnel/ghlSync";
 import { buildRepKpiCards } from "@/lib/funnel/metricRegistry";
 import { RepFilters } from "./RepFilters";
 
@@ -64,10 +65,22 @@ export default async function RepPage({
   const y = now.getFullYear();
   const m = now.getMonth() + 1;
   const targets = getMockTargets();
-  const data = getRepDashboardData(config, repId, y, m, targets);
+  const oppsResult = await getOpportunitiesForClient(clientId);
+  const opps = oppsResult.opps;
+  const data = getRepDashboardData(config, repId, y, m, targets, opps);
   const { repSummary, repStageCounts, teamStageCounts, stageTransitions, repWeekly, flaggedDeals, teamMetrics } = data;
   const monthLabel = new Date(y, m - 1).toLocaleString("default", { month: "long", year: "numeric" });
   const repsForFilters = getRepsForClient(config.clientId).map((r) => ({ id: r.id, name: r.name }));
+
+  const monthStart = new Date(y, m - 1, 1);
+  const monthEnd = new Date(y, m, 0, 23, 59, 59, 999);
+  const setterOppsInMonth = opps.filter((o) => o.setterRepId === repId && o.dateStageEntered >= monthStart && o.dateStageEntered <= monthEnd);
+  const setterSourced = setterOppsInMonth.filter((o) => o.setterAction === "sourced" || !o.setterAction);
+  const setterConfirmed = setterOppsInMonth.filter((o) => o.setterAction === "confirmed");
+  const setterSourcedWon = setterSourced.filter((o) => o.outcome === "won");
+  const setterConfirmedWon = setterConfirmed.filter((o) => o.outcome === "won");
+  const setterSourcedRevenue = setterSourcedWon.reduce((s, o) => s + o.amount, 0);
+  const setterConfirmedRevenue = setterConfirmedWon.reduce((s, o) => s + o.amount, 0);
 
   const maxRepStage = Math.max(1, ...repStageCounts.map((s) => s.count));
   const maxTeamStage = Math.max(1, ...teamStageCounts.map((s) => s.count));
@@ -86,6 +99,25 @@ export default async function RepPage({
         month={m}
         monthLabel={monthLabel}
       />
+
+      {rep.role === "setter" && (
+        <section className="rounded-xl border border-[var(--card-border)] bg-[var(--card)] p-5 shadow-lg">
+          <h2 className="text-xs font-semibold text-[var(--muted)] uppercase tracking-wider mb-4">Sourced vs Confirmed</h2>
+          <div className="grid grid-cols-2 gap-6">
+            <div className="rounded-lg border border-[var(--card-border)] bg-[var(--background)] p-4">
+              <div className="text-xs font-medium text-[var(--muted)] uppercase">Deals Sourced</div>
+              <div className="mt-2 text-2xl font-bold tabular-nums">{setterSourced.length}</div>
+              <div className="text-xs text-[var(--muted)]">Won: {setterSourcedWon.length} · ${setterSourcedRevenue.toLocaleString()}</div>
+            </div>
+            <div className="rounded-lg border border-[var(--card-border)] bg-[var(--background)] p-4">
+              <div className="text-xs font-medium text-[var(--muted)] uppercase">Deals Confirmed</div>
+              <div className="mt-2 text-2xl font-bold tabular-nums">{setterConfirmed.length}</div>
+              <div className="text-xs text-[var(--muted)]">Won: {setterConfirmedWon.length} · ${setterConfirmedRevenue.toLocaleString()}</div>
+            </div>
+          </div>
+          <p className="mt-2 text-[10px] text-[var(--muted)]">Sourced = setter originated the deal. Confirmed = setter qualified/confirmed for closer.</p>
+        </section>
+      )}
 
       {/* Role-based KPI cards: setters see meeting/Discovery/Clarity metrics; closers see closed won, win rate, cycle */}
       <section className="rounded-xl border border-[var(--card-border)] bg-[var(--card)] p-5 shadow-lg">

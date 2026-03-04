@@ -48,6 +48,8 @@ export interface Opportunity {
   /** Setter (sourced the deal): gets revenue sourced attribution. */
   setterRepId?: string | null;
   setterRepName?: string | null;
+  /** Setter action: sourced (originated deal) vs confirmed (qualified/confirmed for closer). */
+  setterAction?: "sourced" | "confirmed" | null;
   stageOrder: number;
   stageName: string;
   /** Stage at which this deal entered the pipeline (e.g. 1 = Discovery Scheduled, 3 = direct Clarity Scheduled). Used so Discovery metrics exclude direct-to-Clarity deals. */

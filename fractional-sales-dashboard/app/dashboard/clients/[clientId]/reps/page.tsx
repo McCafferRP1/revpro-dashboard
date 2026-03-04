@@ -56,7 +56,8 @@ export default async function ClientRepsPage({
   const m = Number.isNaN(month) || month < 1 || month > 12 ? now.getMonth() + 1 : month;
 
   const targets = getMockTargets();
-  const opps = await getOpportunitiesForClient(clientId);
+  const oppsResult = await getOpportunitiesForClient(clientId);
+  const opps = oppsResult.opps;
 
   const baseMetrics = getClientMetrics(config, y, m, targets, opps);
   const clientReps = getRepsForClient(config.clientId);

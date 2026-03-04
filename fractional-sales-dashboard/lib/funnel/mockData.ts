@@ -1,4 +1,4 @@
-import type { ClientFunnelConfig, Opportunity, MonthlyTarget, RepConfig, RepRole } from "./types";
+import type { ClientFunnelConfig, FunnelStageConfig, Opportunity, MonthlyTarget, RepConfig, RepRole } from "./types";
 import { bbpFunnelConfig, bbpReps } from "./bbpConfig";
 import { clearClientIntegrations } from "./integrations";
 import { loadSettings, saveSettings } from "@/lib/settingsBlob";
@@ -241,10 +241,13 @@ function slugForClient(name: string): string {
   return name.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "").slice(0, 24) || "client";
 }
 
-/** Add a new client/account. Uses BBP funnel template for stages. clientId optional (derived from name). */
+/** Add a new client/account. Uses BBP funnel template when stages/primaryStageOrders/kpiMetricKeys not provided. */
 export function addClient(params: {
   clientName: string;
   clientId?: string;
+  stages?: FunnelStageConfig[];
+  primaryStageOrders?: number[];
+  kpiMetricKeys?: string[];
   accountManagerId?: string;
   accountManagerName?: string;
 }): ClientFunnelConfig {
@@ -253,9 +256,11 @@ export function addClient(params: {
     throw new Error(`Client id "${clientId}" already exists`);
   }
   const config: ClientFunnelConfig = {
-    ...bbpFunnelConfig,
     clientId,
     clientName: params.clientName,
+    stages: params.stages ?? bbpFunnelConfig.stages,
+    primaryStageOrders: params.primaryStageOrders ?? bbpFunnelConfig.primaryStageOrders,
+    kpiMetricKeys: params.kpiMetricKeys ?? bbpFunnelConfig.kpiMetricKeys,
     accountManagerId: params.accountManagerId,
     accountManagerName: params.accountManagerName,
   };

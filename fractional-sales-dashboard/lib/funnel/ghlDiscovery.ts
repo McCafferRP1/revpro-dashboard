@@ -44,3 +44,8 @@ export async function refreshDiscovery(clientId: string): Promise<DiscoverySnaps
   cache[clientId] = { pipelines, fetchedAt };
   return { pipelines, fetchedAt };
 }
+
+/** Clear discovery cache for a client (e.g. when admin removes API key). */
+export function clearDiscoveryCache(clientId: string): void {
+  delete cache[clientId];
+}
