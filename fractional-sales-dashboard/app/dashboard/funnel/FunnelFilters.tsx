@@ -35,7 +35,8 @@ export function FunnelFilters({
   const currY = currentYear ?? now.getFullYear();
   const currM = currentMonth ?? now.getMonth() + 1;
   const isViewingThisMonth = year === currY && month === currM;
-  const funnelBase = useClientRoutes ? `${basePath}/dashboard/clients/${clientId}/funnel` : `${basePath}/dashboard/funnel`;
+  // Next.js Link auto-prefixes basePath; use path without basePath to avoid /app/app/... 404
+  const funnelPath = useClientRoutes ? `/dashboard/clients/${clientId}/funnel` : `/dashboard/funnel`;
 
   return (
     <div className="flex flex-wrap items-center gap-6 rounded-xl border border-[var(--card-border)] bg-[var(--card)] px-5 py-4 shadow-lg">
@@ -64,14 +65,14 @@ export function FunnelFilters({
         <span className="text-xs font-medium text-[var(--muted)]">Date range</span>
         <div className="flex gap-1">
           <Link
-            href={`${funnelBase}?year=${currY}&month=${currM}`}
+            href={`${funnelPath}?year=${currY}&month=${currM}`}
             className={`px-3 py-2 text-sm rounded-lg ${isViewingThisMonth ? "bg-[var(--accent)] text-white font-medium" : "bg-[var(--background)] text-[var(--foreground)]"}`}
           >
             This month
           </Link>
           {lastMonthYear != null && lastMonthMonth != null && (
             <Link
-              href={`${funnelBase}?year=${lastMonthYear}&month=${lastMonthMonth}`}
+              href={`${funnelPath}?year=${lastMonthYear}&month=${lastMonthMonth}`}
               className={`px-3 py-2 text-sm rounded-lg ${!isViewingThisMonth && year === lastMonthYear && month === lastMonthMonth ? "bg-[var(--accent)] text-white font-medium" : "bg-[var(--background)] text-[var(--foreground)]"}`}
             >
               {lastMonthLabel ?? "Last month"}
