@@ -1,12 +1,16 @@
 import Link from "next/link";
 import { getSession } from "@/lib/auth";
-import { storeInit } from "@/lib/store";
+import { storeInit, storeRequiresDatabase } from "@/lib/store";
 import { hydrateSettings } from "@/lib/funnel/mockData";
 import { DashboardNav } from "./DashboardNav";
+import { SetupRequired } from "./SetupRequired";
 
 export default async function DashboardLayout({
   children,
 }: { children: React.ReactNode }) {
+  if (storeRequiresDatabase()) {
+    return <SetupRequired />;
+  }
   await storeInit();
   await hydrateSettings();
   const session = await getSession();

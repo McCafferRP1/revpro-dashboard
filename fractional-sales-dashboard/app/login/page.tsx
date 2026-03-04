@@ -1,12 +1,14 @@
 import { redirect } from "next/navigation";
 import { LoginForm } from "./LoginForm";
 import { getSession } from "@/lib/auth";
+import { storeRequiresDatabase } from "@/lib/store";
 
 export default async function LoginPage({
   searchParams,
 }: {
   searchParams: Promise<{ from?: string }>;
 }) {
+  if (storeRequiresDatabase()) redirect("/dashboard");
   const session = await getSession();
   if (session) redirect("/dashboard");
 
