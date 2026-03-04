@@ -1,12 +1,12 @@
 /**
  * Simple auth: users store, session cookie (signed), role-based access.
- * On Netlify we persist users in Netlify Blobs so they survive across serverless instances.
- * Locally we use in-memory (no Blobs config).
+ * Users are persisted via the shared store (file or Postgres). Not dependent on Netlify Blobs.
+ * Data is loaded on every request so it is always current.
  */
 
 import { cookies } from "next/headers";
 import { createHash, createHmac, timingSafeEqual } from "crypto";
-import { getStore } from "@netlify/blobs";
+import { storeGet, storeSet } from "@/lib/store";
 
 export type UserRole = "account_manager" | "collaborator";
 
@@ -23,7 +23,6 @@ export interface User {
 const SESSION_COOKIE = "revpro_session";
 const SESSION_MAX_AGE = 60 * 60 * 24 * 7; // 7 days
 const SECRET = process.env.SESSION_SECRET ?? "revpro-dev-secret-change-in-production";
-const BLOB_KEY = "revpro-users";
 
 function sign(payload: string): string {
   return createHmac("sha256", SECRET).update(payload).digest("hex");
@@ -45,33 +44,22 @@ function seedUser(): User {
   };
 }
 
-/** In-memory fallback when Blobs unavailable (e.g. local dev). */
-let memoryStore: User[] = [seedUser()];
-
 async function getUsersStore(): Promise<User[]> {
+  const raw = await storeGet("users");
+  if (!raw) {
+    const initial = [seedUser()];
+    await storeSet("users", JSON.stringify(initial));
+    return initial;
+  }
   try {
-    const store = getStore({ name: "revpro-auth", consistency: "strong" });
-    const raw = await store.get(BLOB_KEY);
-    if (!raw) {
-      const initial = [seedUser()];
-      await store.set(BLOB_KEY, JSON.stringify(initial));
-      return initial;
-    }
-    const str = typeof raw === "string" ? raw : new TextDecoder().decode(raw as ArrayBuffer);
-    return JSON.parse(str) as User[];
+    return JSON.parse(raw) as User[];
   } catch {
-    return memoryStore;
+    return [seedUser()];
   }
 }
 
 async function setUsersStore(users: User[]): Promise<void> {
-  try {
-    const store = getStore({ name: "revpro-auth", consistency: "strong" });
-    await store.set(BLOB_KEY, JSON.stringify(users));
-    return;
-  } catch {
-    memoryStore = users;
-  }
+  await storeSet("users", JSON.stringify(users));
 }
 
 export async function getUsers(): Promise<Omit<User, "passwordHash">[]> {

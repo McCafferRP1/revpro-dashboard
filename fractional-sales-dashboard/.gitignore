@@ -30,6 +30,10 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
+# local store (when DATABASE_URL not set)
+.revpro-data.json
+.revpro-settings.json
+
 # env files (can opt-in for committing if needed)
 .env*
 

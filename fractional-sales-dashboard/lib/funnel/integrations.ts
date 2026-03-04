@@ -100,7 +100,7 @@ export function setFieldMapping(clientId: string, id: IntegrationId, ourField: s
   getClientMappings(clientId)[id] = list;
 }
 
-/** Snapshot for persisting to Blob (configured + masked key only; raw key is never stored). */
+/** Snapshot for persisting to store (configured + masked key only; raw key is never stored). */
 export interface IntegrationsSnapshot {
   integrations: Record<string, Record<IntegrationId, IntegrationConfig>>;
   fieldMappings: Record<string, Record<IntegrationId, FieldMappingEntry[]>>;

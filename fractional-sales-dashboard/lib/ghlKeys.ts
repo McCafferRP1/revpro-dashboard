@@ -1,41 +1,42 @@
 /**
  * Secure storage for raw GHL API keys per client.
- * Stored in a separate Netlify Blob store (revpro-ghl-keys), keyed by clientId.
+ * Uses the shared store (key "ghl_keys": { [clientId]: key }). Not dependent on Netlify Blobs.
  * Never logged or exposed to the client; used only server-side for GHL API calls.
  */
 
-const STORE_NAME = "revpro-ghl-keys";
+import { storeGet, storeSet } from "@/lib/store";
+
+type GhlKeysMap = Record<string, string>;
+
+async function getKeysMap(): Promise<GhlKeysMap> {
+  const raw = await storeGet("ghl_keys");
+  if (!raw) return {};
+  try {
+    return JSON.parse(raw) as GhlKeysMap;
+  } catch {
+    return {};
+  }
+}
+
+async function setKeysMap(map: GhlKeysMap): Promise<void> {
+  await storeSet("ghl_keys", JSON.stringify(map));
+}
 
 export async function getGhlKey(clientId: string): Promise<string | null> {
-  try {
-    const { getStore } = await import("@netlify/blobs");
-    const store = getStore({ name: STORE_NAME, consistency: "strong" });
-    const raw = await store.get(clientId);
-    if (raw == null) return null;
-    const str = typeof raw === "string" ? raw : new TextDecoder().decode(raw as ArrayBuffer);
-    return str || null;
-  } catch {
-    return null;
-  }
+  const map = await getKeysMap();
+  const key = map[clientId];
+  return key?.trim() || null;
 }
 
 export async function setGhlKey(clientId: string, key: string): Promise<void> {
   if (!clientId || !key?.trim()) return;
-  try {
-    const { getStore } = await import("@netlify/blobs");
-    const store = getStore({ name: STORE_NAME, consistency: "strong" });
-    await store.set(clientId, key.trim());
-  } catch {
-    // no-op when Blobs unavailable (e.g. local dev)
-  }
+  const map = await getKeysMap();
+  map[clientId] = key.trim();
+  await setKeysMap(map);
 }
 
 export async function deleteGhlKey(clientId: string): Promise<void> {
-  try {
-    const { getStore } = await import("@netlify/blobs");
-    const store = getStore({ name: STORE_NAME, consistency: "strong" });
-    await store.delete(clientId);
-  } catch {
-    // no-op
-  }
+  const map = await getKeysMap();
+  delete map[clientId];
+  await setKeysMap(map);
 }

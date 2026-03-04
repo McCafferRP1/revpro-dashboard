@@ -1,14 +1,12 @@
 /**
- * Persist settings (clients, overrides, reps, targets) in Netlify Blobs
- * so they survive across serverless instances. Falls back to no-op when not on Netlify.
+ * Persist settings (clients, overrides, reps, targets, integrations, field mappings).
+ * Uses the shared store (file or Postgres via DATABASE_URL). Not dependent on Netlify Blobs.
+ * Data is loaded on every request via hydrateSettings() so it is always current.
  */
 
-import { getStore } from "@netlify/blobs";
+import { storeGet, storeSet } from "@/lib/store";
 import type { ClientFunnelConfig, MonthlyTarget, RepConfig } from "@/lib/funnel/types";
 import type { IntegrationsSnapshot } from "@/lib/funnel/integrations";
-
-const BLOB_STORE = "revpro-settings";
-const BLOB_KEY = "data";
 
 export interface SettingsSnapshot {
   additionalClients: ClientFunnelConfig[];
@@ -20,22 +18,16 @@ export interface SettingsSnapshot {
 }
 
 export async function loadSettings(): Promise<SettingsSnapshot | null> {
+  const raw = await storeGet("settings");
+  if (!raw) return null;
   try {
-    const store = getStore({ name: BLOB_STORE, consistency: "strong" });
-    const raw = await store.get(BLOB_KEY);
-    if (!raw) return null;
-    const str = typeof raw === "string" ? raw : new TextDecoder().decode(raw as ArrayBuffer);
-    return JSON.parse(str) as SettingsSnapshot;
+    return JSON.parse(raw) as SettingsSnapshot;
   } catch {
     return null;
   }
 }
 
+/** Persist settings. Throws on failure so callers can show an error. */
 export async function saveSettings(snapshot: SettingsSnapshot): Promise<void> {
-  try {
-    const store = getStore({ name: BLOB_STORE, consistency: "strong" });
-    await store.set(BLOB_KEY, JSON.stringify(snapshot));
-  } catch {
-    // no-op when Blobs unavailable (e.g. local dev)
-  }
+  await storeSet("settings", JSON.stringify(snapshot));
 }

@@ -295,7 +295,7 @@ export function removeClient(clientId: string): boolean {
   return true;
 }
 
-/** Load settings from Blobs into in-memory stores (call at start of request when on Netlify). */
+/** Load settings from store (file or DB) into in-memory stores. Call at start of request so data is current. */
 export async function hydrateSettings(): Promise<void> {
   const data = await loadSettings();
   if (!data) return;
@@ -319,7 +319,7 @@ export async function hydrateSettings(): Promise<void> {
   }
 }
 
-/** Persist current in-memory settings to Blobs (call after any mutation). */
+/** Persist current in-memory settings to store (file or DB). Throws if save fails. */
 export async function persistSettings(): Promise<void> {
   const { integrations, fieldMappings } = getIntegrationsSnapshot();
   await saveSettings({

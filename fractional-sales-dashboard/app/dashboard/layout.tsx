@@ -1,11 +1,13 @@
 import Link from "next/link";
 import { getSession } from "@/lib/auth";
+import { storeInit } from "@/lib/store";
 import { hydrateSettings } from "@/lib/funnel/mockData";
 import { DashboardNav } from "./DashboardNav";
 
 export default async function DashboardLayout({
   children,
 }: { children: React.ReactNode }) {
+  await storeInit();
   await hydrateSettings();
   const session = await getSession();
   const isAdministrator = session?.isAdministrator ?? false;
